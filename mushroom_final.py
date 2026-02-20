@@ -2,120 +2,104 @@ import pixci
 
 # 1. Khởi tạo Canvas 32x32
 canvas = pixci.Canvas(32, 32)
+canvas.add_layer("grass")
+canvas.add_layer("mushroom")
 
-# Bảng màu Ghibli / Tự nhiên
+# 2. Định nghĩa Bảng màu thủ công
 canvas.add_palette({
-    "BG": "#00000000",   
-    "R_HILITE": "#FF8A8A", # Highlight đỏ
-    "R_BASE":   "#E63946", # Đỏ nấm
-    "R_SHAD":   "#A82030", # Bóng đổ nấm
-    "W_BASE":   "#FFF3E0", # Trắng kem (đốm)
-    "W_SHAD":   "#D4C4B4", # Bóng đốm
-    "S_LITE":   "#F1FAEE", # Sáng thân nấm
-    "S_BASE":   "#A8DADC", # Màu thân base (hơi ngả lơ)
-    "S_SHAD":   "#457B9D", # Bóng thân
-    "GILLS":    "#1D3557", # Gầm nấm cực tối
-    "GRASS_1":  "#2A9D8F",
-    "GRASS_2":  "#217A6F",
-    "OUTLINE":  "#1A1116", # Đen hơi tía
+    "BG": "#00000000",   # Trong suốt
+    "R1": "#E62E2D",     # Đỏ cơ bản
+    "R2": "#B31C26",     # Đỏ tối (Bóng tối)
+    "R3": "#FF6B6B",     # Đỏ sáng (Highlight)
+    "W1": "#FFFFFF",     # Trắng tinh
+    "W2": "#E0E0E0",     # Trắng xám (Bóng của đốm trắng)
+    "S1": "#E8D5C4",     # Màu thân nấm sáng
+    "S2": "#B59C8D",     # Màu thân nấm tối
+    "G1": "#1E1A20",     # Gầm nấm (Rất tối)
+    "C1": "#45B363",     # Cỏ sáng
+    "C2": "#2A7A44",     # Cỏ tối
 })
 
 # ==========================================
-# LAYER: GRASS
+# LAYER: GRASS (Cỏ dưới nền)
 # ==========================================
-canvas.add_layer("grass")
 canvas.set_layer("grass")
-
-# Đổ khối gò đất cong mượt ở hai đầu
-canvas.draw_line((4, 28), (27, 28), "GRASS_1")
-canvas.fill_rect((2, 29), (29, 31), "GRASS_2")
-canvas.draw_line((3, 29), (28, 29), "GRASS_1") # Trộn màu nhẹ
-
-# Điểm xuyết các ngọn cỏ nhô lên thay vì dùng Dither caro
-canvas.set_pixel((6, 27), "GRASS_1")
-canvas.set_pixel((11, 27), "GRASS_1")
-canvas.set_pixel((17, 27), "GRASS_1")
-canvas.set_pixel((21, 27), "GRASS_1")
-canvas.set_pixel((25, 27), "GRASS_1")
+canvas.draw_line((6, 28), (26, 28), "C2")
+canvas.draw_line((4, 29), (28, 29), "C1")
+canvas.draw_line((3, 30), (29, 30), "C1")
+canvas.draw_line((4, 31), (28, 31), "C2")
+canvas.set_pixel((5, 28), "C1")
+canvas.set_pixel((27, 28), "C1")
+canvas.fill_dither((5, 29, 27, 30), color1="C1", color2="C2", pattern="checkered")
 
 
 # ==========================================
-# LAYER: MUSHROOM
+# LAYER: MUSHROOM (Nấm nổi lên trên cỏ)
 # ==========================================
-canvas.add_layer("mushroom")
 canvas.set_layer("mushroom")
 
-# 1. Vẽ thân nấm (Thuôn dần mượt mà)
-canvas.fill_rect((12, 24), (19, 27), "S_BASE")
-canvas.fill_rect((18, 24), (19, 27), "S_SHAD")
-canvas.fill_rect((12, 24), (12, 27), "S_LITE")
-# Thu nhỏ nhẹ ở trên
-canvas.fill_rect((13, 20), (18, 23), "S_BASE")
-canvas.fill_rect((17, 20), (18, 23), "S_SHAD")
-canvas.fill_rect((13, 20), (13, 23), "S_LITE")
+# Vẽ Thân nấm
+canvas.fill_rect((13, 20), (18, 28), "S1")
+canvas.fill_rect((17, 20), (18, 28), "S2")
+canvas.set_pixel((12, 28), "S1")
+canvas.set_pixel((19, 28), "S2")
 
-# 2. Gầm nấm (Gills mỏng nhẹ)
-canvas.draw_line((9, 19), (22, 19), "GILLS")
-canvas.draw_line((11, 20), (20, 20), "GILLS")
+# Vẽ Gầm nấm (Sử dụng tính năng Ellipse rỗng dẹt)
+canvas.fill_ellipse(center=(16, 20), rx=6, ry=1, color="G1")
 
-# Bóng đổ Cast shadow của gầm nấm đè lên thân nấm (Rất quan trọng)
-canvas.draw_line((13, 20), (18, 20), "S_SHAD")
-canvas.draw_line((13, 21), (17, 21), "S_BASE")
+# Vẽ Mũ nấm (Quét từng dòng kết hợp cắt góc)
+canvas.draw_line((13, 6), (18, 6), "R1")
+canvas.draw_line((10, 7), (21, 7), "R1")
+canvas.draw_line((8, 8),  (23, 8), "R1")
+canvas.draw_line((6, 9),  (25, 9), "R1")
+canvas.draw_line((5, 10), (26, 10), "R1")
+canvas.fill_rect((4, 11), (27, 16), "R1")
+# Cắt cong lùi vào ở góc dưới cùng, khử tai dơi
+canvas.draw_line((5, 17), (26, 17), "R1")
+canvas.draw_line((6, 18), (25, 18), "R1")
 
-# 3. Mũ nấm (Xóa bỏ nửa khối cầu máy móc, vẽ thủ công để tạo khối Cúp hoàn hảo)
-canvas.draw_line((13, 6), (18, 6), "R_BASE")
-canvas.draw_line((10, 7), (21, 7), "R_BASE")
-canvas.draw_line((8, 8),  (23, 8), "R_BASE")
-canvas.draw_line((6, 9),  (25, 9), "R_BASE")
-canvas.draw_line((5, 10), (26, 10), "R_BASE")
-canvas.fill_rect((4, 11), (27, 16), "R_BASE")
-# Cắt cong lùi vào ở góc dưới cùng, hết bị tai dơi!
-canvas.draw_line((5, 17), (26, 17), "R_BASE")
-canvas.draw_line((6, 18), (25, 18), "R_BASE")
-
-# 4. KHÓA ALPHA ĐỂ VẼ BÓNG VÀ ĐỐM MÀ KHÔNG TRÀN RA NGOÀI
+# === Bật khóa Alpha để vẽ bóng, highlight và đốm nằm trong Mũ nấm ===
 canvas.alpha_lock = True
 
-# Bóng râm ôm theo cung 3D
-canvas.draw_line((6, 18), (25, 18), "R_SHAD")
-canvas.draw_line((5, 17), (26, 17), "R_SHAD")
-canvas.fill_rect((24, 11), (27, 16), "R_SHAD")
-canvas.draw_line((22, 9),  (25, 9), "R_SHAD")
-canvas.draw_line((24, 10), (26, 10), "R_SHAD")
+# Bóng râm ở đáy và 2 bên
+canvas.draw_line((6, 18), (25, 18), "R2")
+canvas.draw_line((5, 17), (26, 17), "R2")
+canvas.fill_rect((24, 11), (27, 16), "R2")
+canvas.draw_line((22, 9),  (25, 9), "R2")
+canvas.draw_line((24, 10), (26, 10), "R2")
 
-# Điểm nhấn Highlight rực rỡ bám góc cong
-canvas.draw_line((10, 7), (14, 7), "R_HILITE")
-canvas.draw_line((8, 8),  (12, 8), "R_HILITE")
-canvas.draw_line((7, 9),  (9,  9), "R_HILITE")
+# Highlight bắt sáng
+canvas.draw_line((10, 7), (14, 7), "R3")
+canvas.draw_line((8, 8),  (12, 8), "R3")
+canvas.draw_line((7, 9),  (9,  9), "R3")
 
-# 5. CÁC ĐỐM TRẮNG TỰ NHIÊN (Lùi vào trong, tránh dính viền)
-# Đốm chính (Trái)
-canvas.fill_rect((9, 12), (13, 14), "W_BASE")
-canvas.draw_line((9, 15), (12, 15), "W_SHAD") # Bóng của đốm
-canvas.set_pixel((9, 12), "R_BASE")  # Bo nhẹ góc
+# Các đốm trắng 
+canvas.fill_circle(center=(11, 14), radius=2, color="W1")
+canvas.set_pixel((12, 15), "W2")
 
-# Đốm phụ (Phải)
-canvas.fill_rect((19, 13), (22, 14), "W_SHAD")
-canvas.set_pixel((19, 13), "W_BASE")
+canvas.fill_circle(center=(21, 15), radius=1, color="W1")
+canvas.set_pixel((21, 16), "W2")
 
-# Đốm nhỏ (Trên cực)
-canvas.fill_rect((16, 8), (17, 9), "W_BASE")
-canvas.set_pixel((16, 9), "W_SHAD")
+# Các đốm dẹt phối cảnh bằng Ellipse
+canvas.fill_ellipse(center=(16, 11), rx=1, ry=0, color="W1")
+canvas.fill_ellipse(center=(7,  15), rx=0, ry=1, color="W1")
+canvas.fill_ellipse(center=(24, 13), rx=0, ry=1, color="W1")
 
-# Mở khóa Alpha để tránh ảnh hưởng hệ thống
 canvas.alpha_lock = False
+# ==========================================
+
+# Áp dụng shadow mask cho phần thân nấm
+canvas.apply_shadow_mask(center=(16, 16), radius=14, light_dir="top_left", intensity=0.3, shadow_color="#100010")
 
 # ==========================================
-# GỘP VÀ XUẤT
+# GỘP LAYER VÀ BỌC VIỀN DƯỚI CÙNG
 # ==========================================
-# Ép Layer Nấm lên Layer Cỏ
+# CHỈ TẠO OUTLINE ĐÚNG 1 LẦN DƯỚI CÙNG
 canvas.merge_layers(base_layer="grass", top_layer="mushroom")
 canvas.set_layer("grass")
-
-# Chồng thêm màu bóng chân nấm dưới lớp cỏ để ăn nhập với mặt đất
-canvas.draw_line((12, 28), (19, 28), "GRASS_2")
-
-# Thuật toán Sel-out giờ sẽ hoạt động trơn tru vì các mảng màu đều được làm tròn
 canvas.add_outline(thickness=1, sel_out=True)
+
+# Khử răng cưa
+canvas.cleanup_jaggies()
 
 canvas.save("mushroom_final_masterpiece.png", scale=10)

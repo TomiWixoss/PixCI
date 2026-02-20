@@ -73,6 +73,9 @@ class BaseCanvas:
                             out_g = (fg_c * fa + bg_c * ba * inv_alpha) / out_a
                             out_b = (fb * fa + bb * ba * inv_alpha) / out_a
                             bg[x][y] = (int(out_r), int(out_g), int(out_b), int(out_a))
+                            
+            if top_layer in self.layer_order:
+                self.layer_order.remove(top_layer)
 
     def flatten(self):
         if not self.layer_order: return [[(0, 0, 0, 0)] * self.height for _ in range(self.width)]
