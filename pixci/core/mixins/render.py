@@ -3,8 +3,15 @@ from typing import Tuple, Union, List
 from ..canvas_base import BaseCanvas
 
 class RenderMixin(BaseCanvas):
-    def fill_dither(self, rect: Tuple[int, int, int, int], color1: str, color2: str, pattern: str = "checkered"):
+    def fill_dither(self, rect: Tuple[int, int, int, int], color1: str, color2: str, pattern: str = "checkered", ratio: float = 0.5):
         x0, y0, x1, y1 = rect
+        bayer_matrix_4x4 = [
+            [ 0,  8,  2, 10],
+            [12,  4, 14,  6],
+            [ 3, 11,  1,  9],
+            [15,  7, 13,  5]
+        ]
+        
         for x in range(min(x0, x1), max(x0, x1) + 1):
             for y in range(min(y0, y1), max(y0, y1) + 1):
                 if pattern in ["checkered", "50_percent", "50"]:
@@ -14,6 +21,12 @@ class RenderMixin(BaseCanvas):
                         self.set_pixel((x, y), color2)
                 elif pattern == "25_percent":
                     if x % 2 == 0 and y % 2 == 0:
+                        self.set_pixel((x, y), color1)
+                    else:
+                        self.set_pixel((x, y), color2)
+                elif pattern == "bayer":
+                    threshold = bayer_matrix_4x4[y % 4][x % 4] / 16.0
+                    if ratio > threshold:
                         self.set_pixel((x, y), color1)
                     else:
                         self.set_pixel((x, y), color2)

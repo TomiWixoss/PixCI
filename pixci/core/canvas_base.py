@@ -18,6 +18,7 @@ class BaseCanvas:
         self.layers = {"default": [[(0, 0, 0, 0)] * height for _ in range(width)]}
         self.layer_order = ["default"]
         self.active_layer = "default"
+        self.alpha_lock = False
         self.palette = {}
 
     @property
@@ -38,17 +39,32 @@ class BaseCanvas:
         if name in self.layers:
             self.active_layer = name
 
-    def merge_layers(self, base_layer: str, top_layer: str):
+    def merge_layers(self, base_layer: str, top_layer: str, mode: str = "normal"):
         if base_layer in self.layers and top_layer in self.layers:
             bg = self.layers[base_layer]
             fg = self.layers[top_layer]
             for x in range(self.width):
                 for y in range(self.height):
                     fr, fg_c, fb, fa = fg[x][y]
+                    br, bg_c, bb, ba = bg[x][y]
+                    
+                    if fa == 0:
+                        continue
+                        
+                    if mode == "multiply":
+                        mr = int((fr * br) / 255)
+                        mg = int((fg_c * bg_c) / 255)
+                        mb = int((fb * bb) / 255)
+                        fr, fg_c, fb = mr, mg, mb
+                    elif mode == "add":
+                        ar = min(255, fr + br)
+                        ag = min(255, fg_c + bg_c)
+                        ab = min(255, fb + bb)
+                        fr, fg_c, fb = ar, ag, ab
+                        
                     if fa == 255:
-                        bg[x][y] = fg[x][y]
+                        bg[x][y] = (fr, fg_c, fb, fa)
                     elif fa > 0:
-                        br, bg_c, bb, ba = bg[x][y]
                         alpha = fa / 255.0
                         inv_alpha = 1.0 - alpha
                         out_a = fa + ba * inv_alpha
@@ -92,6 +108,8 @@ class BaseCanvas:
     def set_pixel(self, pos: Tuple[int, int], color: Union[str, Tuple[int, int, int, int]]):
         x, y = pos
         if 0 <= x < self.width and 0 <= y < self.height:
+            if self.alpha_lock and self.grid[x][y][3] == 0:
+                return
             self.grid[x][y] = self._get_color(color)
 
     def _get_light_vector(self, light_dir: str) -> Tuple[float, float, float]:

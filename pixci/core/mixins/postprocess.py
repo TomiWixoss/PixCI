@@ -30,6 +30,7 @@ class PostprocessMixin(BaseCanvas):
                                 self.grid[x][y] = (blend_r, blend_g, blend_b, current[3])
 
     def add_outline(self, color: str = "#000000FF", thickness: int = 1, sel_out: bool = False):
+        import colorsys
         outline_color = self._get_color(color)
         new_grid = [[self.grid[x][y] for y in range(self.height)] for x in range(self.width)]
         
@@ -69,12 +70,12 @@ class PostprocessMixin(BaseCanvas):
                         
                         if solid_neighbors:
                             if sel_out:
-                                neighbor_color = solid_neighbors[0]
-                                darken_factor = 0.5
-                                r = int(neighbor_color[0] * darken_factor)
-                                g = int(neighbor_color[1] * darken_factor)
-                                b = int(neighbor_color[2] * darken_factor)
-                                new_grid[x][y] = (r, g, b, 255)
+                                nc = solid_neighbors[0]
+                                h, l, s = colorsys.rgb_to_hls(nc[0] / 255.0, nc[1] / 255.0, nc[2] / 255.0)
+                                new_h = (h + 0.05) % 1.0 # shift hue toward blue
+                                new_l = max(0.0, l * 0.7) # darken
+                                new_r, new_g, new_b = colorsys.hls_to_rgb(new_h, new_l, s)
+                                new_grid[x][y] = (int(new_r * 255), int(new_g * 255), int(new_b * 255), 255)
                             else:
                                 new_grid[x][y] = outline_color
                             
@@ -109,3 +110,32 @@ class PostprocessMixin(BaseCanvas):
                                     
         for rx, ry in to_remove:
             self.grid[rx][ry] = (0, 0, 0, 0)
+            
+    def apply_internal_aa(self):
+        new_grid = [[self.grid[x][y] for y in range(self.height)] for x in range(self.width)]
+        for x in range(1, self.width - 1):
+            for y in range(1, self.height - 1):
+                c = self.grid[x][y]
+                if c[3] == 0: continue
+                
+                up = self.grid[x][y-1]
+                down = self.grid[x][y+1]
+                left = self.grid[x-1][y]
+                right = self.grid[x+1][y]
+                
+                # Detect inner corner (L-shape) of same color
+                # Example: left and down are the SAME color as each other, but DIFFERENT from center
+                # And that color is also solid
+                for c1, c2, dx, dy in [(left, down, -1, 1), (right, down, 1, 1), (left, up, -1, -1), (right, up, 1, -1)]:
+                    if c1 == c2 and c1 != c and c1[3] > 0 and c[3] > 0:
+                        # Blend center with c1 to create AA pixel
+                        blend_r = int((c[0] + c1[0]) / 2)
+                        blend_g = int((c[1] + c1[1]) / 2)
+                        blend_b = int((c[2] + c1[2]) / 2)
+                        # We apply it to the corner pixel (dx, dy) relative to the intersection point
+                        corn_x, corn_y = x + dx, y + dy
+                        if 0 <= corn_x < self.width and 0 <= corn_y < self.height:
+                            if self.grid[corn_x][corn_y] == c: 
+                                new_grid[x][y] = (blend_r, blend_g, blend_b, 255)
+                                break
+        self.grid = new_grid
