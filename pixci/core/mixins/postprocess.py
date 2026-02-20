@@ -72,9 +72,10 @@ class PostprocessMixin(BaseCanvas):
                             if sel_out:
                                 nc = solid_neighbors[0]
                                 h, l, s = colorsys.rgb_to_hls(nc[0] / 255.0, nc[1] / 255.0, nc[2] / 255.0)
-                                new_h = (h + 0.05) % 1.0 # shift hue toward blue
-                                new_l = max(0.0, l * 0.7) # darken
-                                new_r, new_g, new_b = colorsys.hls_to_rgb(new_h, new_l, s)
+                                new_h = (h + 0.05) % 1.0 
+                                new_l = max(0.0, l * 0.4) 
+                                new_s = min(1.0, s * 1.2) 
+                                new_r, new_g, new_b = colorsys.hls_to_rgb(new_h, new_l, new_s)
                                 new_grid[x][y] = (int(new_r * 255), int(new_g * 255), int(new_b * 255), 255)
                             else:
                                 new_grid[x][y] = outline_color
