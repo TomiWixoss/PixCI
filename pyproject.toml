@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pixci"
-version = "1.0.0"
-description = "Công cụ CLI trung gian chuyển đổi Ảnh Pixel sang Text cho LLMs."
+version = "3.0.0"
+description = "Công cụ CLI + Python Library giúp AI vẽ Pixel Art chất lượng cao."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
@@ -18,4 +18,4 @@ dependencies = [
 pixci = "pixci.cli:app"
 
 [tool.setuptools]
-packages = ["pixci", "pixci.core"]
+packages = ["pixci", "pixci.core", "pixci.core.mixins"]

@@ -1,6 +1,6 @@
 # TÀI LIỆU CÔNG CỤ: PIXCI
 **Tên dự án:** PixCI (Pixel CLI & Coding Interface)
-**Phiên bản:** 2.0.0 (Bao gồm Core CLI & Core Package)
+**Phiên bản:** 3.0.0 (Core CLI + Pro Python Library)
 **Mô tả:** Bộ công cụ toàn diện (CLI + Python Library) giúp làm cầu nối giữa ảnh Pixel Art và AI (LLMs). Cho phép AI đọc hiểu, khởi tạo và chỉnh sửa ảnh pixel thông qua Văn bản (Grid) hoặc Lập trình Lệnh (Procedural Python Code) với độ chính xác tuyệt đối.
 
 ---
@@ -26,7 +26,7 @@ pip install -e .
 Các lệnh mà người dùng sẽ gõ trên Terminal của họ:
 
 ```bash
-# === PHẦN CƠ BẢN ===
+# === PHẦN CƠ BẢN (Grid Mode) ===
 # 1. Chuyển ảnh thành Text Grid
 pixci encode sprite.png -f grid -o output.txt
 
@@ -34,42 +34,112 @@ pixci encode sprite.png -f grid -o output.txt
 pixci decode output.txt --scale 10 -o result.png
 
 
-# === PHẦN NÂNG CẤP (Procedural Generation) ===
+# === PHẦN NÂNG CẤP (Code Mode) ===
 # 3. Biến một ảnh PNG có sẵn thành Code Python
 pixci encode sprite.png -f code -o generated_sprite.py
-# (Output là 1 file code chứa các lệnh set_pixel() tái hiện lại ảnh)
 
 # 4. Khởi tạo một dự án Code trống cho AI
 pixci init --size 32x32 -f code -o blank_canvas.py
-# (Mở file này ra, copy ném cho AI nhờ vẽ thêm)
 
 # 5. Chạy file Python của AI để kết xuất thành ảnh PNG
 pixci run ai_script.py --scale 10
-# (Lệnh này sẽ import thư viện pixci, chạy file script và lưu ảnh)
 ```
 
 ---
 
-## 4. TÀI LIỆU API CHO AI (Dùng để mớm Prompt)
+## 4. TÀI LIỆU API CHO AI (System Prompt)
 
-Để AI có thể sử dụng PixCI, bạn chỉ cần ném cho AI đoạn tài liệu ngắn gọn này (System Prompt):
+Để AI có thể sử dụng PixCI, bạn chỉ cần ném cho AI đoạn tài liệu dưới đây. Đoạn này được thiết kế ngắn gọn nhưng đủ để AI vẽ được ảnh pixel art chất lượng cao.
 
-> **System Prompt gửi AI:**
-> "Bạn là một Pixel Artist bậc thầy. Hãy dùng thư viện `pixci` bằng Python để vẽ.
-> Thư viện `pixci` hỗ trợ các hàm nâng cao:
-> 1. Sinh dải màu tự động: `generate_ramp(base_color, steps, mode="hue_shift")`
-> 2. Khối 3D có ánh sáng: `draw_sphere(center, radius, palette, light_dir)`, `draw_half_sphere`, `fill_cylinder`
-> 3. Hình học 2D: `fill_rect`, `draw_circle(..., pixel_perfect=True)`, `draw_line`, `draw_curve(..., pixel_perfect=True)`
-> 4. Tạo hiệu ứng sần sùi: `fill_dither(rect, color1, color2, pattern="25_percent" | "50_percent")`
-> 5. Bọc viền đen toàn bộ: `add_outline(color, thickness)`
-> Hãy viết code để tạo tác phẩm."
+### ⭐ SYSTEM PROMPT GỬI AI:
 
-**Ví dụ Code AI (Vẽ Nấm Ma Thuật chuẩn AAA):**
+```
+Bạn là một Pixel Artist bậc thầy. Hãy dùng thư viện `pixci` bằng Python để vẽ.
+TIẾ NẠP TƯ DUY:
+- Hệ toạ độ: (0,0) = góc trên bên trái. X tăng sang phải, Y tăng xuống dưới.
+- Luôn dùng Layer để tách phần (background, character, effects).
+- Bật alpha_lock=True trước khi thêm bóng/highlight để không vẽ ra ngoài shape.
+- Ưu tiên draw_rows() thay vì nhiều draw_line() liên tiếp khi sculpt shape phức tạp.
+- Dùng fill_polygon() cho hình dạng tự do (lá, cánh, mũ nấm bất đối xứng).
+- Cuối cùng mới add_outline() và cleanup_jaggies(). LUÔN dùng sel_out=True cho outline tự nhiên.
+- Post-process cuối: apply_shadow_mask() cho vật tròn, apply_directional_shadow() cho vật phẳng/dọc.
+
+THƯ VIỆN PIXCI HỖ TRỢ:
+
+1. Canvas & Layer:
+   canvas = pixci.Canvas(32, 32)
+   canvas.add_layer("name")           # Thêm layer mới
+   canvas.set_layer("name")           # Chuyển layer
+   canvas.merge_layers("base", "top") # Gộp 2 layer
+   canvas.alpha_lock = True/False     # Chỉ vẽ lên pixel có sẵn
+
+2. Bảng màu:
+   canvas.add_palette({"R1": "#E62E2D", "R2": "#B31C26"})
+   canvas.load_palette("endesga32")           # Palette sẵn: endesga32, pico8, sweetie16, nes, gameboy
+   ramp = canvas.generate_ramp("#E62E2D", 5, "hue_shift")  # Tạo dải màu chuyên nghiệp
+   shades = canvas.auto_shade("#E62E2D", 2)   # Tạo shadow+highlight variants
+
+3. Vẽ hình cơ bản:
+   canvas.set_pixel((x, y), "R1")
+   canvas.draw_line((x0,y0), (x1,y1), "R1")
+   canvas.fill_rect((x0,y0), (x1,y1), "R1")
+   canvas.fill_rounded_rect((x0,y0), (x1,y1), radius, "R1")
+   canvas.fill_circle(center, radius, "R1")
+   canvas.fill_ellipse(center, rx, ry, "R1")
+
+4. Vẽ shape nâng cao:
+   canvas.draw_rows([(y, x_start, x_end, "R1"), ...])     # Sculpt shape từng dòng (GỢI Ý DÙNG NHIỀU)
+   canvas.fill_polygon([(x,y), ...], "R1")                 # Đa giác đặc ruột
+   canvas.draw_curve(start, control, end, "R1")             # Bezier bậc 2
+   canvas.draw_cubic_curve(p0, p1, p2, p3, "R1")           # Bezier bậc 3
+   canvas.draw_arc(center, radius, start_deg, end_deg, "R1") # Cung tròn
+   canvas.draw_polyline(points, "R1", closed=True)          # Nối nhiều điểm
+
+5. Dither & 3D Render:
+   canvas.fill_dither(rect_tuple, c1, c2, "checkered"|"25_percent"|"bayer")
+   canvas.draw_sphere(center, radius, palette_list, "top_left")
+   canvas.draw_half_sphere(center, radius, palette_list, "top_left")
+   canvas.fill_cylinder(base, width, height, palette_list, "top_left")
+
+6. Post-process:
+   canvas.add_outline(thickness=1, sel_out=True)            # Viền tự nhiên theo màu gốc
+   canvas.cleanup_jaggies()                                  # Xoá bậc thang outline
+   canvas.apply_shadow_mask(center, radius, "top_left", 0.3) # Bóng cầu (cho vật tròn)
+   canvas.apply_directional_shadow("top_left", 0.3)          # Bóng hướng (cho vật phẳng)
+   canvas.add_highlight_edge("top_left", intensity=0.2)       # Viền sáng rim-light
+   canvas.apply_internal_aa()                                 # Khử răng cưa bên trong
+
+7. Biến đổi:
+   canvas.flip_x() / canvas.flip_y()
+   canvas.translate(dx, dy)
+   canvas.mirror_x()                                          # Đối xứng trái-phải
+   canvas.fill_bucket((x,y), "R1")
+   canvas.stamp((x0,y0), (x1,y1), (target_x, target_y))     # Copy-paste vùng
+   canvas.preview()                                            # Xem lại canvas dưới dạng text
+
+8. Lưu file:
+   canvas.save("output.png", scale=10)
+
+QUY TẮC VÀNG CỦA PIXEL ART:
+- Bắt đầu từ silhouette (shape lớn) → chi tiết → bóng → highlight → outline.
+- Dùng TỐI ĐA 4-6 màu cho mỗi vật thể (bao gồm shadow + highlight).
+- Bóng nên ấm hơn (warm) và highlight nên lạnh hơn (cool) so với base color.
+- Outline KHÔNG nên đen thuần. Dùng sel_out=True để outline theo màu gốc.
+- Tránh "banding" (các dải màu song song). Xen kẽ pixel để tạo texture.
+- Mỗi pixel phải có MỤC ĐÍCH. Đừng thêm pixel chỉ vì có chỗ trống.
+```
+
+---
+
+## 5. VÍ DỤ CODE AI CHẤT LƯỢNG AAA
+
 ```python
 import pixci
 
 # 1. Khởi tạo Canvas 32x32
 canvas = pixci.Canvas(32, 32)
+canvas.add_layer("grass")
+canvas.add_layer("mushroom")
 
 # 2. Định nghĩa Bảng màu thủ công
 canvas.add_palette({
@@ -86,50 +156,131 @@ canvas.add_palette({
     "C2": "#2A7A44",     # Cỏ tối
 })
 
-# 3. Vẽ bãi cỏ (Organic Shape thay vì hình chữ nhật)
-canvas.draw_line((6, 28), (26, 28), "C2")
-canvas.draw_line((4, 29), (28, 29), "C1")
-canvas.draw_line((3, 30), (29, 30), "C1")
-canvas.draw_line((4, 31), (28, 31), "C2")
+# ==========================================
+# LAYER: GRASS (Cỏ dưới nền)
+# ==========================================
+canvas.set_layer("grass")
+canvas.draw_rows([
+    (28, 6, 26, "C2"),
+    (29, 4, 28, "C1"),
+    (30, 3, 29, "C1"),
+    (31, 4, 28, "C2"),
+])
 canvas.set_pixel((5, 28), "C1")
 canvas.set_pixel((27, 28), "C1")
 canvas.fill_dither((5, 29, 27, 30), color1="C1", color2="C2", pattern="checkered")
 
-# 4. Vẽ Thân nấm (Có độ cong nhẹ ở gốc)
+
+# ==========================================
+# LAYER: MUSHROOM (Sculpt mũ nấm bằng draw_rows)
+# ==========================================
+canvas.set_layer("mushroom")
+
+# Vẽ Thân nấm
 canvas.fill_rect((13, 20), (18, 28), "S1")
 canvas.fill_rect((17, 20), (18, 28), "S2")
 canvas.set_pixel((12, 28), "S1")
 canvas.set_pixel((19, 28), "S2")
 
-# 5. Vẽ Gầm nấm (Gills - Tạo chiều sâu 3D)
-canvas.draw_line((10, 20), (21, 20), "G1")
-canvas.draw_line((8, 19), (23, 19), "G1")
+# Vẽ Gầm nấm
+canvas.fill_ellipse(center=(16, 20), rx=6, ry=1, color="G1")
 
-# 6. Vẽ Mũ nấm (Sử dụng half_sphere nhưng làm phẳng đáy)
-canvas.draw_half_sphere(center=(16, 18), radius=10, palette=["R2", "R1", "R3"], light_dir="top_left")
-canvas.draw_line((7, 18), (6, 19), "R2")
-canvas.draw_line((24, 18), (25, 19), "R2")
+# Vẽ Mũ nấm - Dùng draw_rows để sculpt chính xác
+canvas.draw_rows([
+    (6,  13, 18, "R1"),
+    (7,  10, 21, "R1"),
+    (8,   8, 23, "R1"),
+    (9,   6, 25, "R1"),
+    (10,  5, 26, "R1"),
+    (11,  4, 27, "R1"),
+    (12,  4, 27, "R1"),
+    (13,  4, 27, "R1"),
+    (14,  4, 27, "R1"),
+    (15,  4, 27, "R1"),
+    (16,  4, 27, "R1"),
+    (17,  5, 26, "R1"),
+    (18,  6, 25, "R1"),
+])
 
-# Điểm xuyết Highlight
-canvas.fill_rect((11, 9), (14, 10), "W1") 
-canvas.set_pixel((12, 8), "W1")
+# === Alpha Lock: vẽ bóng, highlight, đốm nằm trong hình ===
+canvas.alpha_lock = True
 
-# 7. Vẽ các đốm trắng (Dùng fill_circle thay vì draw_circle để đặc ruột)
+# Bóng đáy và cạnh phải
+canvas.draw_rows([
+    (18, 6, 25, "R2"),
+    (17, 5, 26, "R2"),
+])
+canvas.fill_rect((24, 11), (27, 16), "R2")
+canvas.draw_rows([
+    (9,  22, 25, "R2"),
+    (10, 24, 26, "R2"),
+])
+
+# Highlight bắt sáng
+canvas.draw_rows([
+    (7,  10, 14, "R3"),
+    (8,   8, 12, "R3"),
+    (9,   7,  9, "R3"),
+])
+
+# Các đốm trắng 
 canvas.fill_circle(center=(11, 14), radius=2, color="W1")
 canvas.set_pixel((12, 15), "W2")
+
 canvas.fill_circle(center=(21, 15), radius=1, color="W1")
 canvas.set_pixel((21, 16), "W2")
-canvas.set_pixel((16, 11), "W1")
-canvas.set_pixel((7, 15), "W1")
-canvas.set_pixel((24, 13), "W1")
 
-# 8. Áp dụng lớp phủ bóng đổ (Post-process)
+# Các đốm dẹt phối cảnh bằng Ellipse
+canvas.fill_ellipse(center=(16, 11), rx=1, ry=0, color="W1")
+canvas.fill_ellipse(center=(7,  15), rx=0, ry=1, color="W1")
+canvas.fill_ellipse(center=(24, 13), rx=0, ry=1, color="W1")
+
+canvas.alpha_lock = False
+
+# ==========================================
+# POST-PROCESS
+# ==========================================
 canvas.apply_shadow_mask(center=(16, 16), radius=14, light_dir="top_left", intensity=0.3, shadow_color="#100010")
 
-# 9. Bao viền (Outline) và xóa răng cưa
-canvas.add_outline(color="#110B11", thickness=1)
-canvas.cleanup_jaggies(outline_color="#110B11")
+# Gộp layer và bọc viền
+canvas.merge_layers(base_layer="grass", top_layer="mushroom")
+canvas.set_layer("grass")
+canvas.add_outline(thickness=1, sel_out=True)
+canvas.cleanup_jaggies()
 
-# 10. Xuất file
-canvas.save("aaa_mushroom.png", scale=10)
+canvas.save("mushroom_aaa.png", scale=10)
 ```
+
+---
+
+## 6. KIẾN TRÚC CODE
+
+```
+pixci/
+├── __init__.py          # Export Canvas + grid functions
+├── __main__.py          # python -m pixci  
+├── cli.py               # Typer CLI (encode/decode/init/run)
+└── core/
+    ├── canvas.py         # Canvas class (kết hợp tất cả Mixins)
+    ├── canvas_base.py    # BaseCanvas: layers, pixel access, save
+    ├── grid_engine.py    # Encode/Decode giữa Image ↔ Text/Code
+    └── mixins/
+        ├── color.py      # Palette, generate_ramp, auto_shade, built-in palettes
+        ├── geometry.py   # draw_line, fill_rect, fill_polygon, draw_rows, curves, arcs
+        ├── render.py     # fill_dither, draw_sphere, fill_cylinder
+        ├── postprocess.py# add_outline, shadow_mask, directional_shadow, cleanup_jaggies
+        ├── transform.py  # flip, translate, mirror, copy/paste, preview, snapshot
+        └── isometric.py  # draw_iso_cube
+```
+
+---
+
+## 7. BUILT-IN PALETTES
+
+| Tên | Số màu | Mô tả |
+|---|---|---|
+| `endesga32` | 32 | Bảng màu pixel art phổ biến nhất, cân bằng warm/cool |
+| `pico8` | 16 | Bảng màu PICO-8 retro console |
+| `sweetie16` | 16 | Bảng màu mềm mại, phù hợp RPG/platformer |
+| `nes` | 16 | Bảng màu NES cổ điển |
+| `gameboy` | 4 | Bảng màu Game Boy (4 sắc xanh) |

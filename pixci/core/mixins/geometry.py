@@ -1,8 +1,9 @@
-from typing import Tuple
+from typing import Tuple, List, Union
 from ..canvas_base import BaseCanvas
 
 class GeometryMixin(BaseCanvas):
     def draw_line(self, start_pos: Tuple[int, int], end_pos: Tuple[int, int], color: str):
+        """Bresenham line from start_pos to end_pos."""
         x0, y0 = start_pos
         x1, y1 = end_pos
         dx = abs(x1 - x0)
@@ -23,7 +24,88 @@ class GeometryMixin(BaseCanvas):
                 err += dx
                 y0 += sy
 
+    def draw_rows(self, rows: List[Tuple[int, int, int, str]]):
+        """Draw multiple horizontal spans in one call.
+        Each row: (y, x_start, x_end, color)
+        This is the PREFERRED way for AI to sculpt complex shapes
+        like mushroom caps, character bodies, etc.
+        
+        Example - Drawing a dome:
+            canvas.draw_rows([
+                (5,  13, 18, "R1"),  # narrow top
+                (6,  11, 20, "R1"),  # wider
+                (7,   9, 22, "R1"),  # widest band
+                (8,   9, 22, "R1"),
+                (9,  10, 21, "R1"),  # taper bottom
+            ])
+        """
+        for entry in rows:
+            y, x_start, x_end, color = entry
+            for x in range(x_start, x_end + 1):
+                self.set_pixel((x, y), color)
+
+    def draw_polyline(self, points: List[Tuple[int, int]], color: str, closed: bool = False):
+        """Draw connected line segments through a series of points.
+        If closed=True, also connects the last point back to the first.
+        """
+        if len(points) < 2:
+            if len(points) == 1:
+                self.set_pixel(points[0], color)
+            return
+        for i in range(len(points) - 1):
+            self.draw_line(points[i], points[i + 1], color)
+        if closed:
+            self.draw_line(points[-1], points[0], color)
+
+    def fill_polygon(self, points: List[Tuple[int, int]], color: str):
+        """Fill an arbitrary polygon defined by vertex points.
+        Uses scanline fill algorithm. Points should be ordered (CW or CCW).
+        
+        Example - Drawing a leaf shape:
+            canvas.fill_polygon([
+                (16, 5), (20, 8), (22, 14), (18, 18), (14, 18), (10, 14), (12, 8)
+            ], "G1")
+        """
+        if len(points) < 3:
+            return
+        
+        # Find bounding box
+        min_y = min(p[1] for p in points)
+        max_y = max(p[1] for p in points)
+        min_x = min(p[0] for p in points)
+        max_x = max(p[0] for p in points)
+        
+        # Scanline fill
+        for y in range(min_y, max_y + 1):
+            # Find all intersections with polygon edges
+            intersections = []
+            n = len(points)
+            for i in range(n):
+                j = (i + 1) % n
+                y0 = points[i][1]
+                y1 = points[j][1]
+                
+                if y0 == y1:
+                    continue  # Skip horizontal edges
+                
+                if min(y0, y1) <= y < max(y0, y1):
+                    # Compute x intersection
+                    x_intersect = points[i][0] + (y - y0) * (points[j][0] - points[i][0]) / (y1 - y0)
+                    intersections.append(x_intersect)
+            
+            intersections.sort()
+            
+            # Fill between pairs
+            for k in range(0, len(intersections) - 1, 2):
+                x_start = int(round(intersections[k]))
+                x_end = int(round(intersections[k + 1]))
+                x_start = max(x_start, min_x)
+                x_end = min(x_end, max_x)
+                for x in range(x_start, x_end + 1):
+                    self.set_pixel((x, y), color)
+
     def draw_curve(self, start_pos: Tuple[int, int], control_pos: Tuple[int, int], end_pos: Tuple[int, int], color: str, pixel_perfect: bool = True):
+        """Quadratic Bezier curve with optional pixel-perfect cleanup."""
         pts = []
         x0, y0 = start_pos
         cx, cy = control_pos
@@ -51,7 +133,7 @@ class GeometryMixin(BaseCanvas):
                 dx2, dy2 = nxt[0]-curr[0], nxt[1]-curr[1]
                 if (abs(dx1) == 1 and dy1 == 0 and dx2 == 0 and abs(dy2) == 1) or \
                    (dx1 == 0 and abs(dy1) == 1 and abs(dx2) == 1 and dy2 == 0):
-                    pass # skip to remove L-shape jaggies
+                    pass  # skip to remove L-shape jaggies
                 else:
                     clean.append(curr)
             clean.append(unique_pts[-1])
@@ -60,11 +142,85 @@ class GeometryMixin(BaseCanvas):
         for p in unique_pts:
             self.set_pixel(p, color)
 
+    def draw_cubic_curve(self, p0: Tuple[int, int], p1: Tuple[int, int], p2: Tuple[int, int], p3: Tuple[int, int], color: str):
+        """Cubic Bezier curve (4 control points) for smoother curves like S-shapes."""
+        x0, y0 = p0
+        x1, y1 = p1
+        x2, y2 = p2
+        x3, y3 = p3
+        dist = max(abs(x3 - x0), abs(y3 - y0)) * 3 + 20
+        
+        prev_point = None
+        for i in range(dist + 1):
+            t = i / dist
+            nt = 1 - t
+            x = nt**3 * x0 + 3 * nt**2 * t * x1 + 3 * nt * t**2 * x2 + t**3 * x3
+            y = nt**3 * y0 + 3 * nt**2 * t * y1 + 3 * nt * t**2 * y2 + t**3 * y3
+            pt = (int(round(x)), int(round(y)))
+            if pt != prev_point:
+                self.set_pixel(pt, color)
+                prev_point = pt
+
+    def draw_arc(self, center: Tuple[int, int], radius: int, start_angle: float, end_angle: float, color: str):
+        """Draw an arc (portion of a circle). Angles in degrees, 0=right, 90=down.
+        
+        Example - top half of a dome:
+            canvas.draw_arc((16, 16), 10, 180, 360, "R1")
+        """
+        import math
+        start_rad = math.radians(start_angle)
+        end_rad = math.radians(end_angle)
+        
+        steps = int(abs(end_angle - start_angle) * radius / 20) + 20
+        prev_point = None
+        for i in range(steps + 1):
+            t = i / steps
+            angle = start_rad + t * (end_rad - start_rad)
+            x = int(round(center[0] + radius * math.cos(angle)))
+            y = int(round(center[1] + radius * math.sin(angle)))
+            pt = (x, y)
+            if pt != prev_point:
+                self.set_pixel(pt, color)
+                prev_point = pt
+
     def fill_rect(self, top_left: Tuple[int, int], bottom_right: Tuple[int, int], color: str):
         x0, y0 = top_left
         x1, y1 = bottom_right
         for x in range(min(x0, x1), max(x0, x1) + 1):
             for y in range(min(y0, y1), max(y0, y1) + 1):
+                self.set_pixel((x, y), color)
+
+    def fill_rounded_rect(self, top_left: Tuple[int, int], bottom_right: Tuple[int, int], radius: int, color: str):
+        """Fill a rectangle with rounded corners. Radius controls corner rounding.
+        
+        Example - UI button or item frame:
+            canvas.fill_rounded_rect((4, 4), (28, 12), 2, "S1")
+        """
+        x0, y0 = top_left
+        x1, y1 = bottom_right
+        if x0 > x1: x0, x1 = x1, x0
+        if y0 > y1: y0, y1 = y1, y0
+        r = min(radius, (x1 - x0) // 2, (y1 - y0) // 2)
+        
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1):
+                # Check if we're in a corner region
+                corner_x = corner_y = None
+                if x < x0 + r and y < y0 + r:
+                    corner_x, corner_y = x0 + r, y0 + r
+                elif x > x1 - r and y < y0 + r:
+                    corner_x, corner_y = x1 - r, y0 + r
+                elif x < x0 + r and y > y1 - r:
+                    corner_x, corner_y = x0 + r, y1 - r
+                elif x > x1 - r and y > y1 - r:
+                    corner_x, corner_y = x1 - r, y1 - r
+                
+                if corner_x is not None:
+                    dx = x - corner_x
+                    dy = y - corner_y
+                    if dx * dx + dy * dy > r * r:
+                        continue
+                
                 self.set_pixel((x, y), color)
 
     def fill_circle(self, center: Tuple[int, int], radius: int, color: str):

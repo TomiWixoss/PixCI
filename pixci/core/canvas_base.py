@@ -1,6 +1,6 @@
 import os
 from PIL import Image
-from typing import Tuple, Union
+from typing import Tuple, Union, List, Optional
 
 def hex2rgba(hex_str: str) -> Tuple[int, int, int, int]:
     if hex_str.startswith("#"):
@@ -20,6 +20,7 @@ class BaseCanvas:
         self.active_layer = "default"
         self.alpha_lock = False
         self.palette = {}
+        self._outline_pixels = set()  # Tracked by postprocess
 
     @property
     def grid(self):
@@ -30,16 +31,48 @@ class BaseCanvas:
         self.layers[self.active_layer] = value
 
     def add_layer(self, name: str):
+        """Add a new drawing layer and set it as active.
+        Layers are drawn bottom-to-top when flattened/saved.
+        
+        Example:
+            canvas.add_layer("background")
+            canvas.add_layer("character")
+            canvas.add_layer("foreground")
+        """
         if name not in self.layers:
             self.layers[name] = [[(0, 0, 0, 0)] * self.height for _ in range(self.width)]
             self.layer_order.append(name)
         self.active_layer = name
 
     def set_layer(self, name: str):
+        """Switch the active drawing layer without creating a new one."""
         if name in self.layers:
             self.active_layer = name
 
+    def delete_layer(self, name: str):
+        """Delete a layer. Cannot delete the last remaining layer."""
+        if name in self.layers and len(self.layer_order) > 1:
+            del self.layers[name]
+            self.layer_order.remove(name)
+            if self.active_layer == name:
+                self.active_layer = self.layer_order[-1]
+
+    def reorder_layers(self, order: List[str]):
+        """Reorder layers. First in list = bottom (drawn first), last = top.
+        
+        Example:
+            canvas.reorder_layers(["background", "shadows", "character", "effects"])
+        """
+        for name in order:
+            if name not in self.layers:
+                raise ValueError(f"Layer '{name}' does not exist")
+        self.layer_order = order
+
     def merge_layers(self, base_layer: str, top_layer: str, mode: str = "normal"):
+        """Merge top_layer down into base_layer.
+        
+        Modes: 'normal', 'multiply', 'add'
+        """
         if base_layer in self.layers and top_layer in self.layers:
             bg = self.layers[base_layer]
             fg = self.layers[top_layer]
@@ -76,11 +109,22 @@ class BaseCanvas:
                             
             if top_layer in self.layer_order:
                 self.layer_order.remove(top_layer)
+            if top_layer in self.layers:
+                del self.layers[top_layer]
+
+    def merge_all(self):
+        """Merge all layers into a single 'default' layer."""
+        flat = self.flatten()
+        self.layers = {"default": flat}
+        self.layer_order = ["default"]
+        self.active_layer = "default"
 
     def flatten(self):
         if not self.layer_order: return [[(0, 0, 0, 0)] * self.height for _ in range(self.width)]
         flat = [[(0, 0, 0, 0)] * self.height for _ in range(self.width)]
         for layer_name in self.layer_order:
+            if layer_name not in self.layers:
+                continue
             fg = self.layers[layer_name]
             for x in range(self.width):
                 for y in range(self.height):
@@ -109,11 +153,24 @@ class BaseCanvas:
         return (0, 0, 0, 0)
 
     def set_pixel(self, pos: Tuple[int, int], color: Union[str, Tuple[int, int, int, int]]):
+        """Set a single pixel at (x, y). Respects alpha_lock."""
         x, y = pos
         if 0 <= x < self.width and 0 <= y < self.height:
             if self.alpha_lock and self.grid[x][y][3] == 0:
                 return
             self.grid[x][y] = self._get_color(color)
+
+    def get_pixel(self, pos: Tuple[int, int]) -> Tuple[int, int, int, int]:
+        """Get the RGBA color of a pixel at (x, y)."""
+        x, y = pos
+        if 0 <= x < self.width and 0 <= y < self.height:
+            return self.grid[x][y]
+        return (0, 0, 0, 0)
+
+    def clear(self, color: Optional[str] = None):
+        """Clear the active layer. If color is given, fill with that color."""
+        fill = self._get_color(color) if color else (0, 0, 0, 0)
+        self.grid = [[fill] * self.height for _ in range(self.width)]
 
     def _get_light_vector(self, light_dir: str) -> Tuple[float, float, float]:
         if light_dir == "top_left": return (-1, -1, 1)
@@ -121,9 +178,18 @@ class BaseCanvas:
         if light_dir == "bottom_left": return (-1, 1, 1)
         if light_dir == "bottom_right": return (1, 1, 1)
         if light_dir == "top": return (0, -1, 1)
+        if light_dir == "left": return (-1, 0, 1)
+        if light_dir == "right": return (1, 0, 1)
+        if light_dir == "bottom": return (0, 1, 1)
         return (0, 0, 1)
 
     def save(self, output_path: str, scale: int = 1):
+        """Save the canvas to a PNG file.
+        
+        Args:
+            output_path: File path for the output image
+            scale: Upscale factor (uses nearest-neighbor for crisp pixels)
+        """
         scale_env = os.environ.get("PIXCI_SCALE")
         if scale_env and scale == 1:
             try:
@@ -143,3 +209,19 @@ class BaseCanvas:
         if scale > 1:
             img = img.resize((self.width * scale, self.height * scale), Image.NEAREST)
         img.save(output_path)
+        
+    def load_image(self, image_path: str, position: Tuple[int, int] = (0, 0)):
+        """Load an external PNG image onto the current layer.
+        
+        Example:
+            canvas.add_layer("reference")
+            canvas.load_image("reference_sprite.png", (0, 0))
+        """
+        img = Image.open(image_path).convert("RGBA")
+        pixels = img.load()
+        px, py = position
+        for x in range(min(img.width, self.width - px)):
+            for y in range(min(img.height, self.height - py)):
+                r, g, b, a = pixels[x, y]
+                if a > 0:
+                    self.set_pixel((px + x, py + y), (r, g, b, a))
