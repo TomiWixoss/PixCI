@@ -73,9 +73,11 @@ THƯ VIỆN PIXCI HỖ TRỢ:
    canvas.merge_layers("base", "top") # Gộp 2 layer
    canvas.alpha_lock = True/False     # Chỉ vẽ lên pixel có sẵn
 
-2. Bảng màu:
+2. Bảng màu (hỗ trợ 4000+ palette từ Lospec!):
    canvas.add_palette({"R1": "#E62E2D", "R2": "#B31C26"})
-   canvas.load_palette("endesga32")           # Palette sẵn: endesga32, pico8, sweetie16, nes, gameboy
+   canvas.load_palette("endesga-32")           # Fetch từ lospec.com, tự cache offline
+   canvas.load_palette("pico-8")               # Slug name = tên trên Lospec URL
+   canvas.load_palette("oil-6", prefix="O_")   # Dùng prefix tránh trùng key
    ramp = canvas.generate_ramp("#E62E2D", 5, "hue_shift")  # Tạo dải màu chuyên nghiệp
    shades = canvas.auto_shade("#E62E2D", 2)   # Tạo shadow+highlight variants
 
@@ -265,7 +267,7 @@ pixci/
     ├── canvas_base.py    # BaseCanvas: layers, pixel access, save
     ├── grid_engine.py    # Encode/Decode giữa Image ↔ Text/Code
     └── mixins/
-        ├── color.py      # Palette, generate_ramp, auto_shade, built-in palettes
+        ├── color.py      # Palette (Lospec API + offline), generate_ramp, auto_shade
         ├── geometry.py   # draw_line, fill_rect, fill_polygon, draw_rows, curves, arcs
         ├── render.py     # fill_dither, draw_sphere, fill_cylinder
         ├── postprocess.py# add_outline, shadow_mask, directional_shadow, cleanup_jaggies
@@ -275,12 +277,28 @@ pixci/
 
 ---
 
-## 7. BUILT-IN PALETTES
+## 7. HỆ THỐNG PALETTE
 
-| Tên | Số màu | Mô tả |
+PixCI tích hợp trực tiếp với **Lospec** (lospec.com) - kho 4000+ palette pixel art lớn nhất thế giới.
+
+```python
+# Load bất kỳ palette nào bằng slug name (tên trên URL lospec)
+canvas.load_palette("endesga-32")      # 32 màu, phổ biến nhất
+canvas.load_palette("pico-8")          # 16 màu retro console  
+canvas.load_palette("sweetie-16")      # 16 màu mềm mại
+canvas.load_palette("resurrect-64")    # 64 màu đa dạng
+canvas.load_palette("oil-6")           # 6 màu minimalist
+canvas.load_palette("slso8")           # 8 màu pastel
+canvas.load_palette("apollo")          # Palette Apollo
+canvas.load_palette("dawnbringer-32")  # DawnBringer 32
+```
+
+**Cơ chế hoạt động:** Lospec API → Cache local (`.palette_cache/`) → Offline fallback.
+
+| Palette Offline | Số màu | Mô tả |
 |---|---|---|
-| `endesga32` | 32 | Bảng màu pixel art phổ biến nhất, cân bằng warm/cool |
-| `pico8` | 16 | Bảng màu PICO-8 retro console |
-| `sweetie16` | 16 | Bảng màu mềm mại, phù hợp RPG/platformer |
-| `nes` | 16 | Bảng màu NES cổ điển |
-| `gameboy` | 4 | Bảng màu Game Boy (4 sắc xanh) |
+| `endesga-32` | 32 | Bảng màu pixel art phổ biến nhất |
+| `pico-8` | 16 | Retro console |
+| `sweetie-16` | 16 | Mềm mại, RPG/platformer |
+| `resurrect-64` | 64 | Đa dạng nhất |
+| `gameboy` | 4 | Game Boy (4 sắc xanh) |

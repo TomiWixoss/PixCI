@@ -1,46 +1,98 @@
 import colorsys
+import json
+import os
+from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 from ..canvas_base import BaseCanvas, hex2rgba
 
 # ============================================================
-# BUILT-IN PALETTES - Các bảng màu huyền thoại cho Pixel Art
+# LOSPEC PALETTE CACHE - Lưu palette đã tải về để dùng offline
 # ============================================================
-BUILTIN_PALETTES = {
-    "endesga32": {
-        "01": "#BE4A2FFF", "02": "#D77643FF", "03": "#EAD4AAFF", "04": "#E4A672FF",
-        "05": "#B86F50FF", "06": "#733E39FF", "07": "#3E2731FF", "08": "#A22633FF",
-        "09": "#E43B44FF", "10": "#F77622FF", "11": "#FEAE34FF", "12": "#FEE761FF",
-        "13": "#63C74DFF", "14": "#3E8948FF", "15": "#265C42FF", "16": "#193C3EFF",
-        "17": "#124E89FF", "18": "#0099DBFF", "19": "#2CE8F5FF", "20": "#FFFFFFFE",
-        "21": "#C0CBDCFF", "22": "#8B9BB4FF", "23": "#5A6988FF", "24": "#3A4466FF",
-        "25": "#262B44FF", "26": "#181425FF", "27": "#FF0044FF", "28": "#68386CFF",
-        "29": "#B55088FF", "30": "#F6757AFF", "31": "#E8B796FF", "32": "#C28569FF",
-    },
-    "pico8": {
-        "BK": "#000000FF", "DN": "#1D2B53FF", "DP": "#7E2553FF", "DG": "#008751FF",
-        "BR": "#AB5236FF", "GY": "#5F574FFF", "LG": "#C2C3C7FF", "WH": "#FFF1E8FF",
-        "RD": "#FF004DFF", "OR": "#FFA300FF", "YE": "#FFEC27FF", "GN": "#00E436FF",
-        "BL": "#29ADFFFF", "LV": "#83769CFF", "PK": "#FF77A8FF", "PC": "#FFCCAAFF",
-    },
-    "sweetie16": {
-        "01": "#1A1C2CFF", "02": "#5D275DFF", "03": "#B13E53FF", "04": "#EF7D57FF",
-        "05": "#FFCD75FF", "06": "#A7F070FF", "07": "#38B764FF", "08": "#257179FF",
-        "09": "#29366FFF", "10": "#3B5DC9FF", "11": "#41A6F6FF", "12": "#73EFF7FF",
-        "13": "#F4F4F4FF", "14": "#94B0C2FF", "15": "#566C86FF", "16": "#333C57FF",
-    },
-    "nes": {
-        "BK": "#000000FF", "DG": "#626262FF", "LG": "#898989FF", "WH": "#ADADADFF",
-        "R1": "#FF0000FF", "R2": "#AB0000FF", "G1": "#00FF00FF", "G2": "#006B00FF",
-        "B1": "#0000FFFF", "B2": "#0000ABFF", "Y1": "#FFFF00FF", "OR": "#FF6B00FF",
-        "CY": "#00FFFFFF", "PU": "#FF00FFFF", "SK": "#FFB6ADFF", "TN": "#004040FF",
-    },
-    "gameboy": {
-        "D0": "#0F380FFF",  # Darkest
-        "D1": "#306230FF",  # Dark
-        "D2": "#8BAC0FFF",  # Light  
-        "D3": "#9BBC0FFF",  # Lightest
-    },
+_CACHE_DIR = Path(__file__).parent.parent.parent.parent / ".palette_cache"
+
+# Offline fallback cho 5 palette phổ biến nhất (dùng khi không có mạng)
+_OFFLINE_PALETTES = {
+    "endesga-32": [
+        "be4a2f","d77643","ead4aa","e4a672","b86f50","733e39","3e2731","a22633",
+        "e43b44","f77622","feae34","fee761","63c74d","3e8948","265c42","193c3e",
+        "124e89","0099db","2ce8f5","ffffff","c0cbdc","8b9bb4","5a6988","3a4466",
+        "262b44","181425","ff0044","68386c","b55088","f6757a","e8b796","c28569",
+    ],
+    "pico-8": [
+        "000000","1d2b53","7e2553","008751","ab5236","5f574f","c2c3c7","fff1e8",
+        "ff004d","ffa300","ffec27","00e436","29adff","83769c","ff77a8","ffccaa",
+    ],
+    "sweetie-16": [
+        "1a1c2c","5d275d","b13e53","ef7d57","ffcd75","a7f070","38b764","257179",
+        "29366f","3b5dc9","41a6f6","73eff7","f4f4f4","94b0c2","566c86","333c57",
+    ],
+    "resurrect-64": [
+        "2e222f","3e3546","625565","966c6c","ab947a","694f62","7f708a","9babb2",
+        "c7dcd0","ffffff","6e2727","b33831","ea4f36","f57d4a","ae2334","e83b3b",
+        "fb6b1d","f79617","f9c22b","7a3045","9e4539","cd683d","e6904e","fbb954",
+        "4c3e24","676633","a2a947","d5e04b","fbff86","165a4c","239063","1ebc73",
+        "91db69","cddf6c","313638","374e4a","547e64","92a984","b2ba90","0b5e65",
+        "0b8a8f","0eaf9b","30e1b9","8ff8e2","323353","484a77","4d65b4","4d9be6",
+        "8fd3ff","45293f","6b3e75","905ea9","a884f3","eaaded","753c54","a24b6f",
+        "cf657f","ed8099","831c5d","c32454","f04f78","f68181","fca790","fdcbb0",
+    ],
+    "gameboy": [
+        "0f380f","306230","8bac0f","9bbc0f",
+    ],
 }
+
+
+def _fetch_from_lospec(slug: str) -> Optional[List[str]]:
+    """Fetch palette hex values from Lospec API."""
+    import urllib.request
+    import urllib.error
+    
+    url = f"https://lospec.com/palette-list/{slug}.hex"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "PixCI/3.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            text = resp.read().decode("utf-8")
+            colors = [line.strip().lower() for line in text.strip().splitlines() if line.strip()]
+            if colors:
+                return colors
+    except (urllib.error.URLError, urllib.error.HTTPError, OSError):
+        pass
+    return None
+
+
+def _save_cache(slug: str, colors: List[str]):
+    """Save palette to local cache for offline use."""
+    _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file = _CACHE_DIR / f"{slug}.json"
+    with open(cache_file, "w") as f:
+        json.dump(colors, f)
+
+
+def _load_cache(slug: str) -> Optional[List[str]]:
+    """Load palette from local cache."""
+    cache_file = _CACHE_DIR / f"{slug}.json"
+    if cache_file.exists():
+        with open(cache_file, "r") as f:
+            return json.load(f)
+    return None
+
+
+def _hex_list_to_dict(colors: List[str], label_mode: str = "number") -> Dict[str, str]:
+    """Convert a list of hex strings to a named palette dict.
+    
+    label_mode:
+        'number' → "01", "02", ... (for most palettes)
+    """
+    result = {}
+    for i, c in enumerate(colors):
+        c = c.strip().lower()
+        if not c.startswith("#"):
+            c = "#" + c
+        if len(c) == 7:  # #RRGGBB → #RRGGBBFF
+            c += "ff"
+        key = f"{i+1:02d}" if len(colors) > 9 else str(i + 1)
+        result[key] = c.upper()
+    return result
 
 
 class ColorMixin(BaseCanvas):
@@ -62,33 +114,63 @@ class ColorMixin(BaseCanvas):
             self.add_color(char, color_code)
 
     def load_palette(self, name: str, prefix: str = ""):
-        """Load a built-in pixel art palette.
+        """Load a pixel art palette by slug name.
         
-        Available palettes: 'endesga32', 'pico8', 'sweetie16', 'nes', 'gameboy'
+        Supports 4000+ palettes from lospec.com!
+        First checks local cache, then fetches from Lospec API,
+        falls back to offline built-in palettes.
+        
+        Popular palettes: 'endesga-32', 'pico-8', 'sweetie-16', 
+        'resurrect-64', 'gameboy', 'island-joy-16', 'apollo',
+        'oil-6', 'fantasy-24', 'slso8', 'zughy-32', 
+        'dreamscape8', 'aap-64', 'na16', 'dawnbringer-32', etc.
         
         Args:
-            name: Name of the built-in palette
-            prefix: Optional prefix to add to all color keys (to avoid collisions)
+            name: Lospec palette slug (the URL name, e.g. 'endesga-32')
+            prefix: Optional prefix for color keys to avoid collisions
             
         Example:
-            canvas.load_palette("pico8")
-            canvas.fill_rect((0, 0), (10, 10), "RD")  # pico-8 red
+            canvas.load_palette("endesga-32")
+            canvas.fill_rect((0, 0), (10, 10), "09")  # Endesga red
             
-            # With prefix to avoid collision
-            canvas.load_palette("endesga32", prefix="E_")
-            canvas.fill_rect((0, 0), (10, 10), "E_09")
+            canvas.load_palette("pico-8", prefix="P_")
+            canvas.fill_rect((0, 0), (10, 10), "P_9")  # Pico-8 red
         """
-        if name.lower() not in BUILTIN_PALETTES:
-            available = ", ".join(BUILTIN_PALETTES.keys())
-            raise ValueError(f"Palette '{name}' not found. Available: {available}")
+        slug = name.lower().strip()
+        colors = None
         
-        palette_data = BUILTIN_PALETTES[name.lower()]
-        for key, hex_val in palette_data.items():
+        # 1. Check local cache
+        colors = _load_cache(slug)
+        
+        # 2. Try Lospec API
+        if colors is None:
+            colors = _fetch_from_lospec(slug)
+            if colors:
+                _save_cache(slug, colors)  # Cache for offline use
+        
+        # 3. Fallback to offline built-in
+        if colors is None and slug in _OFFLINE_PALETTES:
+            colors = _OFFLINE_PALETTES[slug]
+        
+        if colors is None:
+            offline_list = ", ".join(_OFFLINE_PALETTES.keys())
+            raise ValueError(
+                f"Palette '{name}' not found. "
+                f"Check the slug at https://lospec.com/palette-list\n"
+                f"Offline palettes available: {offline_list}"
+            )
+        
+        palette_dict = _hex_list_to_dict(colors)
+        for key, hex_val in palette_dict.items():
             self.palette[prefix + key] = hex2rgba(hex_val)
+        
+        return palette_dict  # Return the dict so the user can see the keys
 
     def list_palettes(self) -> List[str]:
-        """List all available built-in palette names."""
-        return list(BUILTIN_PALETTES.keys())
+        """List offline built-in palette names. 
+        For 4000+ more, visit https://lospec.com/palette-list
+        """
+        return list(_OFFLINE_PALETTES.keys())
 
     def generate_ramp(self, base_color: str, steps: int, mode: str = "hue_shift") -> List[str]:
         """Generate a color ramp from a base color.
@@ -114,22 +196,14 @@ class ColorMixin(BaseCanvas):
             t = i / max(1, (steps - 1))  # 0.0 (darkest) to 1.0 (lightest)
             
             if mode == "hue_shift":
-                # Warm shadows (shift hue toward red/orange), cool highlights (shift toward blue/cyan)
-                # Shadow: +0.04 hue (warmer), Highlight: -0.03 hue (cooler)
                 hue_shift = (0.5 - t) * 0.07
                 new_h = (h + hue_shift) % 1.0
-                
-                # Shadows are more saturated, highlights desaturate slightly
-                sat_curve = 1.0 + (0.5 - t) * 0.3  # 1.15 at shadow, 0.85 at highlight
+                sat_curve = 1.0 + (0.5 - t) * 0.3
                 new_s = min(1.0, max(0.0, s * sat_curve))
-                
-                # Non-linear lightness curve (more detail in midtones)
-                # Using a slight S-curve for more natural look
                 lt = t * t * (3 - 2 * t)  # Smoothstep
                 new_l = min(0.95, max(0.08, l * (0.35 + 1.1 * lt)))
                 
             elif mode == "warm_cool":
-                # Dramatic warm-to-cool shift
                 hue_shift = (0.5 - t) * 0.12
                 new_h = (h + hue_shift) % 1.0
                 new_s = min(1.0, max(0.0, s * (1.0 + (0.5 - t) * 0.5)))
