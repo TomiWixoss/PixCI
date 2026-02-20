@@ -64,33 +64,72 @@ pixci run ai_script.py --scale 10
 > 5. Bọc viền đen toàn bộ: `add_outline(color, thickness)`
 > Hãy viết code để tạo tác phẩm."
 
-**Ví dụ Code AI (Vẽ Nấm Ma Thuật):**
+**Ví dụ Code AI (Vẽ Nấm Ma Thuật chuẩn AAA):**
 ```python
 import pixci
 
 # 1. Khởi tạo Canvas 32x32
 canvas = pixci.Canvas(32, 32)
 
-# 2. Sinh dải màu (Hue-shifted) từ Đỏ và Trắng
-red_ramp = canvas.generate_ramp(base_color="#FF3333", steps=4, mode="hue_shift")
-white_ramp = canvas.generate_ramp(base_color="#FFFFFF", steps=4)
+# 2. Định nghĩa Bảng màu thủ công
+canvas.add_palette({
+    "BG": "#00000000",   # Trong suốt
+    "R1": "#E62E2D",     # Đỏ cơ bản
+    "R2": "#B31C26",     # Đỏ tối (Bóng tối)
+    "R3": "#FF6B6B",     # Đỏ sáng (Highlight)
+    "W1": "#FFFFFF",     # Trắng tinh
+    "W2": "#E0E0E0",     # Trắng xám (Bóng của đốm trắng)
+    "S1": "#E8D5C4",     # Màu thân nấm sáng
+    "S2": "#B59C8D",     # Màu thân nấm tối
+    "G1": "#1E1A20",     # Gầm nấm (Rất tối)
+    "C1": "#45B363",     # Cỏ sáng
+    "C2": "#2A7A44",     # Cỏ tối
+})
 
-# 3. Vẽ thân nấm (Hình trụ)
-canvas.fill_cylinder(base=(16, 28), width=8, height=10, palette=white_ramp, light_dir="top_right")
+# 3. Vẽ bãi cỏ (Organic Shape thay vì hình chữ nhật)
+canvas.draw_line((6, 28), (26, 28), "C2")
+canvas.draw_line((4, 29), (28, 29), "C1")
+canvas.draw_line((3, 30), (29, 30), "C1")
+canvas.draw_line((4, 31), (28, 31), "C2")
+canvas.set_pixel((5, 28), "C1")
+canvas.set_pixel((27, 28), "C1")
+canvas.fill_dither((5, 29, 27, 30), color1="C1", color2="C2", pattern="checkered")
 
-# 4. Vẽ mũ nấm (Nửa khối cầu 3D, tự động có bóng râm)
-canvas.draw_half_sphere(center=(16, 16), radius=12, palette=red_ramp, light_dir="top_right")
+# 4. Vẽ Thân nấm (Có độ cong nhẹ ở gốc)
+canvas.fill_rect((13, 20), (18, 28), "S1")
+canvas.fill_rect((17, 20), (18, 28), "S2")
+canvas.set_pixel((12, 28), "S1")
+canvas.set_pixel((19, 28), "S2")
 
-# 5. Thêm các đốm trắng trên mũ nấm (Dùng pixel_perfect để tròn trịa)
-canvas.draw_circle(center=(12, 12), radius=2, color="#FFFFFF", pixel_perfect=True)
-canvas.draw_circle(center=(20, 15), radius=3, color="#FFFFFF", pixel_perfect=True)
+# 5. Vẽ Gầm nấm (Gills - Tạo chiều sâu 3D)
+canvas.draw_line((10, 20), (21, 20), "G1")
+canvas.draw_line((8, 19), (23, 19), "G1")
 
-# 6. Thêm texture cỏ dưới chân bằng Dithering
-canvas.fill_dither(rect=(4, 28, 28, 32), color1="#2ECC71", color2="#27AE60", pattern="checkered")
+# 6. Vẽ Mũ nấm (Sử dụng half_sphere nhưng làm phẳng đáy)
+canvas.draw_half_sphere(center=(16, 18), radius=10, palette=["R2", "R1", "R3"], light_dir="top_left")
+canvas.draw_line((7, 18), (6, 19), "R2")
+canvas.draw_line((24, 18), (25, 19), "R2")
 
-# 7. Bước cuối cùng: Bọc viền đen toàn bộ Sprite để ra chất Game Retro
-canvas.add_outline(color="#000000", thickness=1)
+# Điểm xuyết Highlight
+canvas.fill_rect((11, 9), (14, 10), "W1") 
+canvas.set_pixel((12, 8), "W1")
 
-# Lưu thành Nấm hoàn chỉnh
-canvas.save("magic_mushroom.png", scale=10)
+# 7. Vẽ các đốm trắng (Dùng fill_circle thay vì draw_circle để đặc ruột)
+canvas.fill_circle(center=(11, 14), radius=2, color="W1")
+canvas.set_pixel((12, 15), "W2")
+canvas.fill_circle(center=(21, 15), radius=1, color="W1")
+canvas.set_pixel((21, 16), "W2")
+canvas.set_pixel((16, 11), "W1")
+canvas.set_pixel((7, 15), "W1")
+canvas.set_pixel((24, 13), "W1")
+
+# 8. Áp dụng lớp phủ bóng đổ (Post-process)
+canvas.apply_shadow_mask(center=(16, 16), radius=14, light_dir="top_left", intensity=0.3, shadow_color="#100010")
+
+# 9. Bao viền (Outline) và xóa răng cưa
+canvas.add_outline(color="#110B11", thickness=1)
+canvas.cleanup_jaggies(outline_color="#110B11")
+
+# 10. Xuất file
+canvas.save("aaa_mushroom.png", scale=10)
 ```

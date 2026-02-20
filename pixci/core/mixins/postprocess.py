@@ -29,7 +29,7 @@ class PostprocessMixin(BaseCanvas):
                                 blend_b = int(current[2] * (1 - shadow_weight) + sb * shadow_weight)
                                 self.grid[x][y] = (blend_r, blend_g, blend_b, current[3])
 
-    def add_outline(self, color: str = "#000000FF", thickness: int = 1):
+    def add_outline(self, color: str = "#000000FF", thickness: int = 1, sel_out: bool = False):
         outline_color = self._get_color(color)
         new_grid = [[self.grid[x][y] for y in range(self.height)] for x in range(self.width)]
         
@@ -60,15 +60,23 @@ class PostprocessMixin(BaseCanvas):
             for x in range(self.width):
                 for y in range(self.height):
                     if self.grid[x][y][3] == 0 and (x, y) in exterior: 
-                        has_solid_neighbor = False
+                        solid_neighbors = []
                         for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                             nx, ny = x + dx, y + dy
                             if 0 <= nx < self.width and 0 <= ny < self.height:
                                 if self.grid[nx][ny][3] != 0 and self.grid[nx][ny] != outline_color:
-                                    has_solid_neighbor = True
-                                    break
-                        if has_solid_neighbor:
-                            new_grid[x][y] = outline_color
+                                    solid_neighbors.append(self.grid[nx][ny])
+                        
+                        if solid_neighbors:
+                            if sel_out:
+                                neighbor_color = solid_neighbors[0]
+                                darken_factor = 0.5
+                                r = int(neighbor_color[0] * darken_factor)
+                                g = int(neighbor_color[1] * darken_factor)
+                                b = int(neighbor_color[2] * darken_factor)
+                                new_grid[x][y] = (r, g, b, 255)
+                            else:
+                                new_grid[x][y] = outline_color
                             
             self.grid = [[new_grid[x][y] for y in range(self.height)] for x in range(self.width)]
             

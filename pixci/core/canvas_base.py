@@ -15,8 +15,70 @@ class BaseCanvas:
     def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
-        self.grid = [[(0, 0, 0, 0)] * height for _ in range(width)]
+        self.layers = {"default": [[(0, 0, 0, 0)] * height for _ in range(width)]}
+        self.layer_order = ["default"]
+        self.active_layer = "default"
         self.palette = {}
+
+    @property
+    def grid(self):
+        return self.layers[self.active_layer]
+
+    @grid.setter
+    def grid(self, value):
+        self.layers[self.active_layer] = value
+
+    def add_layer(self, name: str):
+        if name not in self.layers:
+            self.layers[name] = [[(0, 0, 0, 0)] * self.height for _ in range(self.width)]
+            self.layer_order.append(name)
+        self.active_layer = name
+
+    def set_layer(self, name: str):
+        if name in self.layers:
+            self.active_layer = name
+
+    def merge_layers(self, base_layer: str, top_layer: str):
+        if base_layer in self.layers and top_layer in self.layers:
+            bg = self.layers[base_layer]
+            fg = self.layers[top_layer]
+            for x in range(self.width):
+                for y in range(self.height):
+                    fr, fg_c, fb, fa = fg[x][y]
+                    if fa == 255:
+                        bg[x][y] = fg[x][y]
+                    elif fa > 0:
+                        br, bg_c, bb, ba = bg[x][y]
+                        alpha = fa / 255.0
+                        inv_alpha = 1.0 - alpha
+                        out_a = fa + ba * inv_alpha
+                        if out_a > 0:
+                            out_r = (fr * fa + br * ba * inv_alpha) / out_a
+                            out_g = (fg_c * fa + bg_c * ba * inv_alpha) / out_a
+                            out_b = (fb * fa + bb * ba * inv_alpha) / out_a
+                            bg[x][y] = (int(out_r), int(out_g), int(out_b), int(out_a))
+
+    def flatten(self):
+        if not self.layer_order: return [[(0, 0, 0, 0)] * self.height for _ in range(self.width)]
+        flat = [[(0, 0, 0, 0)] * self.height for _ in range(self.width)]
+        for layer_name in self.layer_order:
+            fg = self.layers[layer_name]
+            for x in range(self.width):
+                for y in range(self.height):
+                    fr, fg_c, fb, fa = fg[x][y]
+                    if fa == 255:
+                        flat[x][y] = fg[x][y]
+                    elif fa > 0:
+                        br, bg_c, bb, ba = flat[x][y]
+                        alpha = fa / 255.0
+                        inv_alpha = 1.0 - alpha
+                        out_a = fa + ba * inv_alpha
+                        if out_a > 0:
+                            out_r = (fr * fa + br * ba * inv_alpha) / out_a
+                            out_g = (fg_c * fa + bg_c * ba * inv_alpha) / out_a
+                            out_b = (fb * fa + bb * ba * inv_alpha) / out_a
+                            flat[x][y] = (int(out_r), int(out_g), int(out_b), min(255, int(out_a)))
+        return flat
 
     def _get_color(self, char_or_color: Union[str, Tuple[int, int, int, int]]) -> Tuple[int, int, int, int]:
         if isinstance(char_or_color, str) and char_or_color in self.palette:
@@ -52,9 +114,10 @@ class BaseCanvas:
             output_path += ".png"
         img = Image.new("RGBA", (self.width, self.height), (0, 0, 0, 0))
         pixels = img.load()
+        flat_grid = self.flatten()
         for x in range(self.width):
             for y in range(self.height):
-                pixels[x, y] = self.grid[x][y]
+                pixels[x, y] = flat_grid[x][y]
         
         if scale > 1:
             img = img.resize((self.width * scale, self.height * scale), Image.NEAREST)

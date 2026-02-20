@@ -68,41 +68,58 @@ class GeometryMixin(BaseCanvas):
                 self.set_pixel((x, y), color)
 
     def fill_circle(self, center: Tuple[int, int], radius: int, color: str):
-        xc, yc = center
-        for x in range(xc - radius, xc + radius + 1):
-            for y in range(yc - radius, yc + radius + 1):
-                dx = x - xc
-                dy = y - yc
-                if dx*dx + dy*dy <= radius*radius:
-                    self.set_pixel((x, y), color)
+        self.fill_ellipse(center, radius, radius, color)
 
     def draw_circle(self, center: Tuple[int, int], radius: int, color: str, pixel_perfect: bool = False):
-        x0, y0 = center
-        f = 1 - radius
-        ddf_x = 1
-        ddf_y = -2 * radius
+        self.draw_ellipse(center, radius, radius, color, pixel_perfect)
+
+    def fill_ellipse(self, center: Tuple[int, int], rx: int, ry: int, color: str):
+        xc, yc = center
+        for x in range(xc - rx, xc + rx + 1):
+            for y in range(yc - ry, yc + ry + 1):
+                dx = x - xc
+                dy = y - yc
+                if (dx * dx) / max(rx * rx, 1) + (dy * dy) / max(ry * ry, 1) <= 1.0:
+                    self.set_pixel((x, y), color)
+
+    def draw_ellipse(self, center: Tuple[int, int], rx: int, ry: int, color: str, pixel_perfect: bool = False):
+        xc, yc = center
         x = 0
-        y = radius
+        y = ry
+        d1 = (ry * ry) - (rx * rx * ry) + (0.25 * rx * rx)
+        dx = 2 * ry * ry * x
+        dy = 2 * rx * rx * y
 
-        self.set_pixel((x0, y0 + radius), color)
-        self.set_pixel((x0, y0 - radius), color)
-        self.set_pixel((x0 + radius, y0), color)
-        self.set_pixel((x0 - radius, y0), color)
-
-        while x < y:
-            if f >= 0:
+        while dx < dy:
+            self.set_pixel((xc + x, yc + y), color)
+            self.set_pixel((xc - x, yc + y), color)
+            self.set_pixel((xc + x, yc - y), color)
+            self.set_pixel((xc - x, yc - y), color)
+            if d1 < 0:
+                x += 1
+                dx = dx + (2 * ry * ry)
+                d1 = d1 + dx + (ry * ry)
+            else:
+                x += 1
                 y -= 1
-                ddf_y += 2
-                f += ddf_y
-            x += 1
-            ddf_x += 2
-            f += ddf_x
-            if not pixel_perfect or (f < 0): 
-                self.set_pixel((x0 + x, y0 + y), color)
-                self.set_pixel((x0 - x, y0 + y), color)
-                self.set_pixel((x0 + x, y0 - y), color)
-                self.set_pixel((x0 - x, y0 - y), color)
-                self.set_pixel((x0 + y, y0 + x), color)
-                self.set_pixel((x0 - y, y0 + x), color)
-                self.set_pixel((x0 + y, y0 - x), color)
-                self.set_pixel((x0 - y, y0 - x), color)
+                dx = dx + (2 * ry * ry)
+                dy = dy - (2 * rx * rx)
+                d1 = d1 + dx - dy + (ry * ry)
+
+        d2 = ((ry * ry) * ((x + 0.5) * (x + 0.5))) + ((rx * rx) * ((y - 1) * (y - 1))) - (rx * rx * ry * ry)
+
+        while y >= 0:
+            self.set_pixel((xc + x, yc + y), color)
+            self.set_pixel((xc - x, yc + y), color)
+            self.set_pixel((xc + x, yc - y), color)
+            self.set_pixel((xc - x, yc - y), color)
+            if d2 > 0:
+                y -= 1
+                dy = dy - (2 * rx * rx)
+                d2 = d2 + (rx * rx) - dy
+            else:
+                y -= 1
+                x += 1
+                dx = dx + (2 * ry * ry)
+                dy = dy - (2 * rx * rx)
+                d2 = d2 + dx - dy + (rx * rx)
