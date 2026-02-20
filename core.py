@@ -2,11 +2,11 @@ import re
 from pathlib import Path
 from PIL import Image
 
-SYSTEM_PROMPT = """You are an AI pixel artist.
-The user will provide you with a [PALETTE] and a [GRID] of characters representing a pixel art image.
-Your task is to understand the image, modify it, or generate new pixel art following the same format.
-- [PALETTE]: Maps characters (A-Z, 0-9) to Hex colors (#RRGGBBAA). '.' is always transparent.
-- [GRID]: Represents the pixels. Each character or '.' is separated by a space. Each line is a row.
+SYSTEM_PROMPT = """Bạn là một AI chuyên vẽ Pixel Art.
+Người dùng sẽ cung cấp cho bạn một [PALETTE] (bảng màu) và một [GRID] (lưới) gồm các ký tự đại diện cho một bức vẽ pixel.
+Nhiệm vụ của bạn là hiểu bức vẽ, chỉnh sửa nó, hoặc tạo ra bức vẽ mới theo cùng một định dạng.
+- [PALETTE]: Ánh xạ các ký tự (A-Z, 0-9) sang mã màu Hex (#RRGGBBAA). '.' luôn là trong suốt (khoảng trống).
+- [GRID]: Đại diện cho các pixel. Mỗi ký tự hoặc '.' được cách nhau bởi một khoảng trắng. Mỗi dòng là một hàng.
 """
 
 def rgb2hex(r, g, b, a=255):
@@ -91,7 +91,7 @@ def encode_image(image_path: Path, output_path: Path, block_size: int, auto_dete
                 hex_val = rgb2hex(r, g, b, a)
                 if hex_val not in palette_mapping:
                     if char_idx >= len(chars):
-                        raise ValueError("Too many colors! PixCI only supports up to 36 unique colors.")
+                        raise ValueError("Quá nhiều màu! PixCI chỉ hỗ trợ tối đa 36 màu duy nhất.")
                     palette_mapping[hex_val] = chars[char_idx]
                     char_idx += 1
                 row.append(palette_mapping[hex_val])
@@ -100,7 +100,7 @@ def encode_image(image_path: Path, output_path: Path, block_size: int, auto_dete
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(SYSTEM_PROMPT.strip() + "\\n\\n")
         f.write("[PALETTE]\\n")
-        f.write(". = #00000000 (Transparent)\\n")
+        f.write(". = #00000000 (Trong suốt)\\n")
         for hex_val, char in palette_mapping.items():
             f.write(f"{char} = {hex_val}\\n")
             
@@ -119,7 +119,7 @@ def decode_text(text_path: Path, output_path: Path, scale: int) -> tuple[int, in
     grid_match = re.search(r"\[GRID\](.*?)(\n\s*\n|\Z)", content, re.DOTALL)
     
     if not palette_match or not grid_match:
-        raise ValueError("Could not find [PALETTE] or [GRID] sections in file.")
+        raise ValueError("Không tìm thấy phần [PALETTE] hoặc [GRID] trong file.")
         
     palette_text = palette_match.group(1).strip().split("\n")
     grid_text = grid_match.group(1).strip().split("\n")
@@ -147,14 +147,14 @@ def decode_text(text_path: Path, output_path: Path, scale: int) -> tuple[int, in
             grid_lines.append(chars)
             
     if not grid_lines:
-        raise ValueError("Grid is empty.")
+        raise ValueError("Lưới rỗng.")
         
     height = len(grid_lines)
     width = len(grid_lines[0])
     
     for idx, row in enumerate(grid_lines):
         if len(row) != width:
-            raise ValueError(f"Row {idx+1} has invalid length {len(row)} (expected {width}).")
+            raise ValueError(f"Hàng {idx+1} có độ dài không hợp lệ {len(row)} (Yêu cầu {width}).")
             
     img = Image.new("RGBA", (width, height), (0,0,0,0))
     pixels = img.load()
@@ -162,7 +162,7 @@ def decode_text(text_path: Path, output_path: Path, scale: int) -> tuple[int, in
     for y, row in enumerate(grid_lines):
         for x, char in enumerate(row):
             if char not in palette:
-                raise ValueError(f"Character '{char}' at ({x}, {y}) is not in palette!")
+                raise ValueError(f"Ký tự '{char}' tại ({x}, {y}) không tồn tại trong palette!")
             pixels[x, y] = hex2rgba(palette[char])
             
     if scale > 1:
@@ -177,8 +177,8 @@ def init_canvas(output_path: Path, width: int, height: int):
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(SYSTEM_PROMPT.strip() + "\\n\\n")
         f.write("[PALETTE]\\n")
-        f.write(". = #00000000 (Transparent)\\n")
-        f.write("A = #000000FF (Black)\\n\\n")
+        f.write(". = #00000000 (Trong suốt)\\n")
+        f.write("A = #000000FF (Đen)\\n\\n")
         f.write("[GRID]\\n")
         for _ in range(height):
             f.write(" ".join(["."] * width) + "\\n")

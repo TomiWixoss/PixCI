@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pixci"
 version = "1.0.0"
-description = "CLI tool for converting Pixel Art to Text for LLMs."
+description = "Công cụ CLI trung gian chuyển đổi Ảnh Pixel sang Text cho LLMs."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
