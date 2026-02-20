@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pixci = "cli:app"
+pixci = "pixci.cli:app"
 
 [tool.setuptools]
-py-modules = ["cli", "core"]
+packages = ["pixci", "pixci.core"]

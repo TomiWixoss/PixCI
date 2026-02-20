@@ -109,6 +109,56 @@ def encode_image(image_path: Path, output_path: Path, block_size: int, auto_dete
             
     return (grid_w, grid_h, len(palette_mapping), block_size)
     
+def encode_code(image_path: Path, output_path: Path, block_size: int, auto_detect: bool) -> tuple[int, int, int, int]:
+    img = Image.open(image_path).convert("RGBA")
+    
+    if auto_detect:
+        block_size = detect_block_size(img)
+        
+    width, height = img.size
+    
+    grid_w = width // block_size
+    grid_h = height // block_size
+    
+    pixels = img.load()
+    
+    palette_mapping = {}
+    char_idx = 0
+    
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write("# HƯỚNG DẪN SỬ DỤNG THƯ VIỆN PIXCI CHO AI\n")
+        f.write("import pixci\n\n")
+        f.write(f"canvas = pixci.Canvas(width={grid_w}, height={grid_h})\n\n")
+        f.write("canvas.add_palette({\n")
+        
+        # First pass: collect colors
+        for y in range(0, height, block_size):
+            for x in range(0, width, block_size):
+                r, g, b, a = pixels[x, y]
+                if a != 0:
+                    hex_val = rgb2hex(r, g, b, a)
+                    if hex_val not in palette_mapping:
+                        char_idx += 1
+                        palette_mapping[hex_val] = str(char_idx)
+                        
+        for hex_val, char in palette_mapping.items():
+            f.write(f'    "{char}": "{hex_val}",\n')
+        f.write("})\n\n")
+        
+        # Second pass: write set_pixel commands
+        for y in range(0, height, block_size):
+            for x in range(0, width, block_size):
+                r, g, b, a = pixels[x, y]
+                if a != 0:
+                    hex_val = rgb2hex(r, g, b, a)
+                    char = palette_mapping[hex_val]
+                    gx = x // block_size
+                    gy = y // block_size
+                    f.write(f'canvas.set_pixel(({gx}, {gy}), "{char}")\n')
+                    
+        f.write(f'\ncanvas.save("{output_path.stem}.png")\n')
+        
+    return (grid_w, grid_h, len(palette_mapping), block_size)
 
 def decode_text(text_path: Path, output_path: Path, scale: int) -> tuple[int, int]:
     with open(text_path, "r", encoding="utf-8") as f:
@@ -180,3 +230,14 @@ def init_canvas(output_path: Path, width: int, height: int):
         f.write("[GRID]\n")
         for _ in range(height):
             f.write(" ".join(["."] * width) + "\n")
+
+def init_code_canvas(output_path: Path, width: int, height: int):
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write("# HƯỚNG DẪN SỬ DỤNG THƯ VIỆN PIXCI CHO AI\n")
+        f.write("import pixci\n\n")
+        f.write(f"canvas = pixci.Canvas(width={width}, height={height})\n\n")
+        f.write("canvas.add_palette({\n")
+        f.write('    "1": "#000000FF", # Đen\n')
+        f.write("})\n\n")
+        f.write("# Viết code set_pixel, draw_line, fill_rect ở đây\n\n")
+        f.write(f'canvas.save("{output_path.stem}.png")\n')

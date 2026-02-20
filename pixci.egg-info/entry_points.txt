@@ -1,2 +1,2 @@
 [console_scripts]
-pixci = cli:app
+pixci = pixci.cli:app
