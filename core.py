@@ -98,15 +98,14 @@ def encode_image(image_path: Path, output_path: Path, block_size: int, auto_dete
         output_grid.append(" ".join(row))
         
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write(SYSTEM_PROMPT.strip() + "\\n\\n")
-        f.write("[PALETTE]\\n")
-        f.write(". = #00000000 (Trong suốt)\\n")
+        f.write("[PALETTE]\n")
+        f.write(". = #00000000 (Trong suốt)\n")
         for hex_val, char in palette_mapping.items():
-            f.write(f"{char} = {hex_val}\\n")
+            f.write(f"{char} = {hex_val}\n")
             
-        f.write("\\n[GRID]\\n")
+        f.write("\n[GRID]\n")
         for row_str in output_grid:
-            f.write(row_str + "\\n")
+            f.write(row_str + "\n")
             
     return (grid_w, grid_h, len(palette_mapping), block_size)
     
@@ -175,10 +174,9 @@ def decode_text(text_path: Path, output_path: Path, scale: int) -> tuple[int, in
 
 def init_canvas(output_path: Path, width: int, height: int):
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write(SYSTEM_PROMPT.strip() + "\\n\\n")
-        f.write("[PALETTE]\\n")
-        f.write(". = #00000000 (Trong suốt)\\n")
-        f.write("A = #000000FF (Đen)\\n\\n")
-        f.write("[GRID]\\n")
+        f.write("[PALETTE]\n")
+        f.write(". = #00000000 (Trong suốt)\n")
+        f.write("A = #000000FF (Đen)\n\n")
+        f.write("[GRID]\n")
         for _ in range(height):
-            f.write(" ".join(["."] * width) + "\\n")
+            f.write(" ".join(["."] * width) + "\n")
