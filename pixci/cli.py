@@ -16,12 +16,17 @@ def encode(
     output: Path = typer.Option(..., "-o", "--output", help="Đường dẫn file text đầu ra"),
     form: str = typer.Option("grid", "-f", "--format", help="Định dạng đầu ra: 'grid' hoặc 'code' (mặc định: grid)"),
     auto: bool = typer.Option(False, "--auto", help="Tự động phát hiện kích thước block"),
-    block_size: int = typer.Option(1, "--block-size", help="Chỉ định kích thước block thủ công")
+    block_size: int = typer.Option(1, "--block-size", help="Chỉ định kích thước block thủ công"),
+    style: str = typer.Option("generic", "--style", help="Chế độ encode ('generic' hoặc 'minecraft')")
 ):
     """Chuyển đổi file ảnh thành dạng file text của PixCI."""
     try:
         if form.lower() == "code":
-            grid_w, grid_h, num_colors, final_block_size = encode_code(image_path, output, block_size, auto)
+            if style.lower() == "minecraft":
+                from .styles.minecraft import MinecraftStyle
+                grid_w, grid_h, num_colors, final_block_size = MinecraftStyle.encode(image_path, output, block_size, auto)
+            else:
+                grid_w, grid_h, num_colors, final_block_size = encode_code(image_path, output, block_size, auto)
         else:
             grid_w, grid_h, num_colors, final_block_size = encode_image(image_path, output, block_size, auto)
         
