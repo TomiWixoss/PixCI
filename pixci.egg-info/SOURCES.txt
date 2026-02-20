@@ -1,0 +1,10 @@
+README.md
+cli.py
+core.py
+pyproject.toml
+pixci.egg-info/PKG-INFO
+pixci.egg-info/SOURCES.txt
+pixci.egg-info/dependency_links.txt
+pixci.egg-info/entry_points.txt
+pixci.egg-info/requires.txt
+pixci.egg-info/top_level.txt

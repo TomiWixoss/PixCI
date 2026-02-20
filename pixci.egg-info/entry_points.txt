@@ -1,0 +1,2 @@
+[console_scripts]
+pixci = cli:app
