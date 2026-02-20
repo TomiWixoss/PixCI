@@ -18,4 +18,4 @@ dependencies = [
 pixci = "pixci.cli:app"
 
 [tool.setuptools]
-packages = ["pixci", "pixci.core", "pixci.core.mixins"]
+packages = ["pixci", "pixci.core", "pixci.core.mixins", "pixci.styles"]
