@@ -29,6 +29,18 @@ class TransformMixin(BaseCanvas):
                 new_grid[x][self.height - 1 - y] = self.grid[x][y]
         self.grid = new_grid
 
+    def mirror_x(self):
+        """Mirror the left half of the active layer to the right half."""
+        for y in range(self.height):
+            for x in range(self.width // 2):
+                self.grid[self.width - 1 - x][y] = self.grid[x][y]
+
+    def mirror_y(self):
+        """Mirror the top half of the active layer to the bottom half."""
+        for x in range(self.width):
+            for y in range(self.height // 2):
+                self.grid[x][self.height - 1 - y] = self.grid[x][y]
+
     def fill_bucket(self, start_pos: Tuple[int, int], color: str):
         """Flood fill from start_pos with the given color."""
         x, y = start_pos
