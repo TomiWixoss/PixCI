@@ -137,8 +137,8 @@ class Canvas:
             for y in range(min(y0, y1), max(y0, y1) + 1):
                 self.set_pixel((x, y), color)
 
-    def draw_circle(self, center_pos: Tuple[int, int], radius: int, color: str, pixel_perfect: bool = False):
-        x0, y0 = center_pos
+    def draw_circle(self, center: Tuple[int, int], radius: int, color: str, pixel_perfect: bool = False):
+        x0, y0 = center
         f = 1 - radius
         ddf_x = 1
         ddf_y = -2 * radius
