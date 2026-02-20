@@ -211,12 +211,7 @@ class BaseCanvas:
         img.save(output_path)
         
     def load_image(self, image_path: str, position: Tuple[int, int] = (0, 0)):
-        """Load an external PNG image onto the current layer.
-        
-        Example:
-            canvas.add_layer("reference")
-            canvas.load_image("reference_sprite.png", (0, 0))
-        """
+        """Load an external PNG image onto the current layer."""
         img = Image.open(image_path).convert("RGBA")
         pixels = img.load()
         px, py = position
@@ -225,3 +220,67 @@ class BaseCanvas:
                 r, g, b, a = pixels[x, y]
                 if a > 0:
                     self.set_pixel((px + x, py + y), (r, g, b, a))
+
+    # =================================================================
+    # SPATIAL HELPERS - Giúp AI định vị bằng ngữ nghĩa thay vì số
+    # =================================================================
+
+    def get_center(self) -> Tuple[int, int]:
+        """Trả về tâm của Canvas. AI dùng làm điểm neo chính.
+        
+        Example:
+            cx, cy = canvas.get_center()  # (16, 16) trên canvas 32x32
+        """
+        return (self.width // 2, self.height // 2)
+
+    def get_ground(self, margin: int = 2) -> int:
+        """Trả về y 'mặt đất' (gần đáy canvas). AI dùng để đặt chân nhân vật.
+        
+        Example:
+            ground_y = canvas.get_ground()  # 29 trên canvas 32x32
+        """
+        return self.height - 1 - margin
+
+    def anchor_above(self, base_y: int, offset: int) -> int:
+        """Tính y nằm TRÊN base_y một khoảng offset. Y giảm = lên trên.
+        
+        Example:
+            stem_top = 24
+            cap_bottom = canvas.anchor_above(stem_top, 1)  # 23
+        """
+        return base_y - offset
+
+    def anchor_below(self, base_y: int, offset: int) -> int:
+        """Tính y nằm DƯỚI base_y một khoảng offset. Y tăng = xuống dưới."""
+        return base_y + offset
+
+    def anchor_left_of(self, base_x: int, offset: int) -> int:
+        """Tính x nằm BÊN TRÁI base_x."""
+        return base_x - offset
+
+    def anchor_right_of(self, base_x: int, offset: int) -> int:
+        """Tính x nằm BÊN PHẢI base_x."""
+        return base_x + offset
+
+    def span(self, center: int, size: int) -> Tuple[int, int]:
+        """Tính (start, end) từ center và size. AI dùng để tạo bounding box cân xứng.
+        
+        Example:
+            cx = 16
+            x_start, x_end = canvas.span(cx, 10)  # (11, 20)
+            canvas.fill_rect((x_start, y0), (x_end, y1), "R1")
+        """
+        half = size // 2
+        return (center - half, center + half - (1 if size % 2 == 0 else 0))
+
+    def bbox(self, center_x: int, center_y: int, width: int, height: int) -> Tuple[int, int, int, int]:
+        """Tạo bounding box (x0, y0, x1, y1) từ tâm và kích thước.
+        AI dùng để quy hoạch vùng vẽ cho từng bộ phận.
+        
+        Example:
+            cap_box = canvas.bbox(cx, 12, 22, 12)  # (5, 6, 26, 17)
+            stem_box = canvas.bbox(cx, 24, 6, 8)   # (13, 20, 18, 27)
+        """
+        x0, x1 = self.span(center_x, width)
+        y0, y1 = self.span(center_y, height)
+        return (x0, y0, x1, y1)

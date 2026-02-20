@@ -279,3 +279,83 @@ class GeometryMixin(BaseCanvas):
                 dx = dx + (2 * ry * ry)
                 dy = dy - (2 * rx * rx)
                 d2 = d2 + dx - dy + (rx * rx)
+
+    # =================================================================
+    # ANCHOR-BASED DRAWING - AI vẽ bằng điểm neo thay vì toạ độ thô
+    # =================================================================
+
+    def fill_rect_centered(self, center: Tuple[int, int], width: int, height: int, color: str):
+        """Fill a rectangle defined by CENTER + SIZE thay vì top-left/bottom-right.
+        AI chỉ cần biết "tâm" và "kích thước" → không cần tính toạ độ góc.
+        
+        Example:
+            cx, cy = canvas.get_center()
+            canvas.fill_rect_centered((cx, 24), width=6, height=8, color="S1")
+        """
+        x0, x1 = self.span(center[0], width)
+        y0, y1 = self.span(center[1], height)
+        self.fill_rect((x0, y0), (x1, y1), color)
+
+    def fill_ellipse_anchored(self, anchor: Tuple[int, int], rx: int, ry: int, color: str, align: str = "center"):
+        """Fill an ellipse positioned by ANCHOR POINT + ALIGNMENT.
+        AI không cần tính tâm thật, chỉ cần nói "đặt ở đáy của điểm neo".
+        
+        Args:
+            anchor: (x, y) điểm neo
+            rx, ry: Bán kính ngang/dọc
+            align: 
+                "center" → anchor = tâm ellipse
+                "bottom" → anchor = đáy ellipse (tâm y dịch lên ry pixel)  
+                "top"    → anchor = đỉnh ellipse (tâm y dịch xuống ry pixel)
+        
+        Example:
+            ground_y = canvas.get_ground()
+            cx = canvas.get_center()[0]
+            # Đặt thân nấm chạm mặt đất
+            canvas.fill_ellipse_anchored((cx, ground_y), rx=3, ry=6, color="S1", align="bottom")
+            # Đặt mũ nấm đội lên trên thân
+            cap_y = ground_y - 12
+            canvas.fill_ellipse_anchored((cx, cap_y), rx=10, ry=5, color="R1", align="bottom")
+        """
+        ax, ay = anchor
+        if align == "bottom":
+            center = (ax, ay - ry)
+        elif align == "top":
+            center = (ax, ay + ry)
+        else:
+            center = (ax, ay)
+        self.fill_ellipse(center, rx, ry, color)
+
+    def fill_rect_anchored(self, anchor: Tuple[int, int], width: int, height: int, color: str, align: str = "center"):
+        """Fill a rectangle positioned by ANCHOR + ALIGNMENT.
+        
+        Args:
+            anchor: (x, y) điểm neo
+            width, height: Kích thước
+            align:
+                "center"       → anchor = tâm rect
+                "bottom"       → anchor = tâm-đáy (bottom-center)
+                "top"          → anchor = tâm-đỉnh (top-center)
+                "bottom_left"  → anchor = góc dưới trái
+                "bottom_right" → anchor = góc dưới phải
+        """
+        ax, ay = anchor
+        half_w = width // 2
+        
+        if align == "center":
+            x0, y0 = ax - half_w, ay - height // 2
+        elif align == "bottom":
+            x0, y0 = ax - half_w, ay - height + 1
+        elif align == "top":
+            x0, y0 = ax - half_w, ay
+        elif align == "bottom_left":
+            x0, y0 = ax, ay - height + 1
+        elif align == "bottom_right":
+            x0, y0 = ax - width + 1, ay - height + 1
+        else:
+            x0, y0 = ax - half_w, ay - height // 2
+        
+        x1 = x0 + width - 1
+        y1 = y0 + height - 1
+        self.fill_rect((x0, y0), (x1, y1), color)
+

@@ -10,6 +10,47 @@ Nhiệm vụ của bạn là hiểu bức vẽ, chỉnh sửa nó, hoặc tạo 
 - [GRID]: Đại diện cho các pixel. Mỗi ký tự hoặc '.' được cách nhau bởi một khoảng trắng. Mỗi dòng là một hàng.
 """
 
+# System Prompt dành cho chế độ Code (AI viết code Python)
+AI_CODE_SYSTEM_PROMPT = """[SYSTEM PROMPT DÀNH CHO AI PIXEL ARTIST]
+
+Bạn là một AI Lead Pixel Artist chuẩn AAA. Bạn sử dụng thư viện `pixci` để vẽ.
+Vì bạn không thể nhìn bằng mắt, bạn PHẢI tuân thủ nghiêm ngặt quy trình tư duy sau:
+
+═══ QUY TRÌNH BẮT BUỘC ═══
+
+1. PALETTE DESIGN: Khai báo bảng màu có Shadow (dịch Hue sang tím/lạnh, KHÔNG dùng xám), Base, Highlight.
+   Hoặc dùng: canvas.load_palette("endesga-32")
+
+2. SPATIAL PLANNING (Quy hoạch không gian): LUÔN khai báo biến tọa độ TRƯỚC khi vẽ.
+   ❌ SAI: canvas.fill_rect((12, 20), (19, 27), "S1")
+   ✅ ĐÚNG:
+       cx, cy = canvas.get_center()
+       ground_y = canvas.get_ground()
+       stem_w, stem_h = 6, 8
+       stem_top = ground_y - stem_h
+       cap_w, cap_h = 22, 12
+       cap_bottom = stem_top
+       cap_top = cap_bottom - cap_h
+
+3. LAYERING: background → main → details (xa → gần).
+
+4. BLOCKING: Dùng biến đã khai báo để vẽ silhouette:
+   canvas.fill_rect_centered((cx, ground_y - stem_h//2), stem_w, stem_h, "S1")
+   canvas.draw_dome(cx, cap_bottom, cap_w, cap_h, "R1")
+
+5. SHADING: Bật alpha_lock=True, vẽ bóng + highlight BÊN TRONG shape.
+   Bóng ở đáy + cạnh xa sáng. Highlight ở đỉnh + cạnh gần sáng.
+
+6. MERGE & OUTLINE: Gộp layers → add_outline(sel_out=True) → cleanup_jaggies().
+   CHỈ GỌI 1 LẦN ở cuối cùng.
+
+═══ LUẬT SẮT ═══
+- TUYỆT ĐỐI không hardcode số lặp lại. Dùng biến: center_x, width, height, ground_y, v.v.
+- Dùng canvas.get_center(), canvas.get_ground(), canvas.span(), canvas.bbox() để tính toạ độ.
+- Dùng fill_rect_centered(), fill_ellipse_anchored(align="bottom"), draw_dome() thay vì tính tay.
+- Mỗi vật thể TỐI ĐA 4-6 màu (shadow, dark, base, light, highlight).
+"""
+
 def rgb2hex(r, g, b, a=255):
     return f"#{r:02X}{g:02X}{b:02X}{a:02X}"
 
@@ -426,84 +467,138 @@ def init_canvas(output_path: Path, width: int, height: int):
             f.write(" ".join(["."] * width) + "\n")
 
 def init_code_canvas(output_path: Path, width: int, height: int):
-    """Generate a comprehensive AI-ready template with spatial guides
-    and step-by-step workflow instructions.
+    """Generate an AI-optimized template that teaches spatial reasoning.
+    
+    Implements 3 core principles:
+    1. Semantic Variables (no hardcoded numbers)
+    2. Chain of Thought workflow (7 strict steps)
+    3. Anchor Point API (relative positioning)
     """
     mid_x = width // 2
     mid_y = height // 2
-    q1_y = height // 4
-    q3_y = height * 3 // 4
+    ground = height - 3
     
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write(f"""# ╔══════════════════════════════════════════════════════════════╗
-# ║  PIXCI CANVAS - AI Drawing Template                        ║
+        f.write(f'''# ╔══════════════════════════════════════════════════════════════╗
+# ║  PIXCI CANVAS - AI Spatial Drawing Template                ║
 # ║  Canvas: {width}x{height} pixels                                      ║
 # ╚══════════════════════════════════════════════════════════════╝
 #
-# COORDINATE GUIDE (không cần nhớ, chỉ tra cứu khi cần):
-#   (0,0)=top-left    ({mid_x},{0})=top-center    ({width-1},0)=top-right
-#   (0,{mid_y})=mid-left    ({mid_x},{mid_y})=CENTER         ({width-1},{mid_y})=mid-right
-#   (0,{height-1})=bot-left    ({mid_x},{height-1})=bot-center    ({width-1},{height-1})=bot-right
+# ═══ LUẬT SẮT (AI PHẢI TUÂN THỦ) ═══
 #
-# X RULER: 0----5----10---15---{min(20,width-1)}{'---25---30' if width > 25 else ''}
-# Y RULER: 0=top, {q1_y}=quarter, {mid_y}=middle, {q3_y}=three-quarter, {height-1}=bottom
+# 1. KHÔNG BAO GIỜ hardcode tọa độ trực tiếp.
+#    ❌ SAI:  canvas.fill_rect((12, 20), (19, 27), "S1")
+#    ✅ ĐÚNG: canvas.fill_rect_centered((cx, stem_cy), stem_w, stem_h, "S1")
 #
-# ════════════════════════════════════════════════════════════════
-# WORKFLOW (PHẢI theo thứ tự này):
+# 2. LUÔN khai báo biến tọa độ ở BƯỚC 2 trước khi vẽ.
+#    Lý do: AI không có mắt. Biến giúp AI theo dõi vị trí các bộ phận
+#    và đảm bảo chúng thẳng hàng với nhau.
 #
-#   Bước 1: PALETTE        → Chọn 4-8 màu (load_palette hoặc add_palette)
-#   Bước 2: LAYERS          → Tạo layers (background → foreground → effects)
-#   Bước 3: SILHOUETTE      → Vẽ shape lớn bằng fill_rect / draw_rows / fill_polygon
-#   Bước 4: ALPHA LOCK      → Bật alpha_lock=True, thêm bóng (shadow) & highlight BÊN TRONG shape
-#   Bước 5: DETAILS         → Thêm chi tiết nhỏ (đốm, mắt, nút áo...)
-#   Bước 6: POST-PROCESS    → merge_layers → add_outline(sel_out=True) → cleanup_jaggies
-#   Bước 7: SAVE            → canvas.save("output.png", scale=10)
+# 3. Dùng Anchor functions thay vì cộng trừ tay:
+#    canvas.get_center()        → (cx, cy) tâm canvas
+#    canvas.get_ground()        → y mặt đất
+#    canvas.span(cx, width)     → (x_start, x_end) cân xứng quanh tâm
+#    canvas.bbox(cx, cy, w, h)  → (x0, y0, x1, y1) bounding box
+#    canvas.anchor_above(y, n)  → y - n (lên trên)
+#    canvas.anchor_below(y, n)  → y + n (xuống dưới)
 #
-# TIPS:
-#   - draw_rows() là hàm MẠNH NHẤT: vẽ shape tự do bằng cách định nghĩa từng dòng ngang
-#   - fill_polygon() cho shape phức tạp (cánh, lá, mũi kiếm...)
-#   - Bóng nên ẤM hơn base (dịch hue sang đỏ/cam)
-#   - Highlight nên LẠNH hơn base (dịch hue sang xanh)
-#   - Outline KHÔNG ĐEN thuần → dùng sel_out=True để outline theo màu gốc
-# ════════════════════════════════════════════════════════════════
+# ═══ WORKFLOW (7 BƯỚC) ═══
 
 import pixci
 
 canvas = pixci.Canvas({width}, {height})
 
-# ──── Bước 1: PALETTE ────
+# ╔══════════════════════════════════════╗
+# ║ BƯỚC 1: PALETTE                     ║
+# ╚══════════════════════════════════════╝
+# Chọn 1 trong 2 cách:
 # Cách 1: Load palette có sẵn (4000+ từ lospec.com)
 # canvas.load_palette("endesga-32")
-# Cách 2: Tự định nghĩa
+# Cách 2: Tự định nghĩa (shadow=lạnh/tím, base, highlight=ấm/sáng)
 canvas.add_palette({{
-    "C01": "#000000FF",  # Thay bằng màu của bạn
+    # Thay bằng màu của vật thể cần vẽ
+    "SH": "#000000FF",  # Shadow (dịch hue sang tím/lạnh, KHÔNG dùng xám)
+    "BS": "#000000FF",  # Base
+    "HL": "#000000FF",  # Highlight
 }})
 
-# ──── Bước 2: LAYERS ────
+# ╔══════════════════════════════════════╗
+# ║ BƯỚC 2: SPATIAL PLANNING            ║
+# ║ (Quy hoạch không gian bằng BIẾN)    ║
+# ╚══════════════════════════════════════╝
+cx, cy = canvas.get_center()       # Tâm canvas: ({mid_x}, {mid_y})
+ground_y = canvas.get_ground()     # Mặt đất: y={ground}
+
+# Khai báo kích thước + vị trí cho từng bộ phận:
+# (AI PHẢI điền giá trị cụ thể ở đây trước khi vẽ)
+#
+# Ví dụ cho cây nấm:
+# stem_w, stem_h = 6, 8
+# stem_top = ground_y - stem_h
+# stem_cy = ground_y - stem_h // 2
+# cap_w, cap_h = 22, 12
+# cap_bottom = stem_top              # Mũ đặt trên đỉnh thân
+# cap_cy = cap_bottom - cap_h // 2
+
+# ╔══════════════════════════════════════╗
+# ║ BƯỚC 3: LAYERS                      ║
+# ╚══════════════════════════════════════╝
 canvas.add_layer("background")
 canvas.add_layer("main")
 
-# ──── Bước 3: SILHOUETTE ────
+# ╔══════════════════════════════════════╗
+# ║ BƯỚC 4: SILHOUETTE (Blocking)       ║
+# ║ Dùng biến từ Bước 2 để vẽ           ║
+# ╚══════════════════════════════════════╝
 canvas.set_layer("main")
-# Dùng draw_rows để sculpt shape:
+
+# Ví dụ vẽ bằng Anchor:
+# canvas.fill_rect_centered((cx, stem_cy), stem_w, stem_h, "BS")
+# canvas.draw_dome(cx, cap_bottom, cap_w, cap_h, "BS")
+#
+# Hoặc vẽ bằng draw_rows (tự do hơn):
 # canvas.draw_rows([
-#     (y,  x_start, x_end, "C01"),   # y=hàng, x_start..x_end = chiều ngang
+#     (cap_top,     cx-2, cx+2, "BS"),   # Đỉnh hẹp
+#     (cap_top + 1, cx-5, cx+5, "BS"),   # Rộng dần
+#     ...                                 # Rộng nhất
+#     (cap_bottom,  cx-3, cx+3, "BS"),   # Thu hẹp đáy
 # ])
 
-# ──── Bước 4: SHADOW & HIGHLIGHT ────
-# canvas.alpha_lock = True
-# canvas.draw_rows([...])  # Vẽ bóng bên trong shape
+# ╔══════════════════════════════════════╗
+# ║ BƯỚC 5: SHADING & HIGHLIGHT         ║
+# ╚══════════════════════════════════════╝
+# canvas.alpha_lock = True   # CHỈ vẽ bên trong shape đã có
+# 
+# # Bóng ở đáy + cạnh phải (xa nguồn sáng top_left)
+# canvas.draw_rows([
+#     (cap_bottom,     cx-3, cx+3, "SH"),
+#     (cap_bottom - 1, cx-4, cx+4, "SH"),
+# ])
+# 
+# # Highlight ở đỉnh + cạnh trái (gần nguồn sáng)  
+# canvas.draw_rows([
+#     (cap_top + 1, cx-4, cx-1, "HL"),
+#     (cap_top + 2, cx-5, cx-2, "HL"),
+# ])
+#
 # canvas.alpha_lock = False
 
-# ──── Bước 5: DETAILS ────
-# canvas.set_pixel((x, y), "C01")
+# ╔══════════════════════════════════════╗
+# ║ BƯỚC 6: DETAILS                     ║
+# ╚══════════════════════════════════════╝
+# canvas.set_pixel((cx - 3, cy), "HL")   # Chi tiết nhỏ
 
-# ──── Bước 6: POST-PROCESS ────
+# ╔══════════════════════════════════════╗
+# ║ BƯỚC 7: MERGE & POST-PROCESS        ║
+# ╚══════════════════════════════════════╝
 # canvas.merge_layers("background", "main")
 # canvas.set_layer("background")
 # canvas.add_outline(thickness=1, sel_out=True)
 # canvas.cleanup_jaggies()
 
-# ──── Bước 7: SAVE ────
+# ╔══════════════════════════════════════╗
+# ║ SAVE                                ║
+# ╚══════════════════════════════════════╝
 canvas.save("{output_path.stem}.png", scale=10)
-""")
+''')
+
