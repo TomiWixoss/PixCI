@@ -97,13 +97,20 @@ THƯ VIỆN PIXCI HỖ TRỢ:
    canvas.draw_arc(center, radius, start_deg, end_deg, "R1") # Cung tròn
    canvas.draw_polyline(points, "R1", closed=True)          # Nối nhiều điểm
 
-5. Dither & 3D Render:
+5. Semantic Shapes (AI-friendly, MÔ TẢ hình dạng thay vì toạ độ):
+   canvas.draw_dome(center_x, base_y, width, height, "R1")         # Vòm (mũ nấm, đồi, mái)
+   canvas.draw_taper(center_x, top_y, bot_y, top_w, bot_w, "S1")   # Thu hẹp (thân cây, cột, sừng)
+   canvas.draw_blob(center, rx, ry, "G1", noise=0.15)               # Hình dạng tự nhiên (mây, bụi)
+   canvas.draw_star(center, outer_r, inner_r, 5, "Y1")              # Ngôi sao
+   canvas.draw_gem(center, w, h, [dark, mid, light, highlight])      # Viên đá quý tự shading
+
+6. Dither & 3D Render:
    canvas.fill_dither(rect_tuple, c1, c2, "checkered"|"25_percent"|"bayer")
    canvas.draw_sphere(center, radius, palette_list, "top_left")
    canvas.draw_half_sphere(center, radius, palette_list, "top_left")
    canvas.fill_cylinder(base, width, height, palette_list, "top_left")
 
-6. Post-process:
+7. Post-process:
    canvas.add_outline(thickness=1, sel_out=True)            # Viền tự nhiên theo màu gốc
    canvas.cleanup_jaggies()                                  # Xoá bậc thang outline
    canvas.apply_shadow_mask(center, radius, "top_left", 0.3) # Bóng cầu (cho vật tròn)
@@ -111,7 +118,7 @@ THƯ VIỆN PIXCI HỖ TRỢ:
    canvas.add_highlight_edge("top_left", intensity=0.2)       # Viền sáng rim-light
    canvas.apply_internal_aa()                                 # Khử răng cưa bên trong
 
-7. Biến đổi:
+8. Biến đổi:
    canvas.flip_x() / canvas.flip_y()
    canvas.translate(dx, dy)
    canvas.mirror_x()                                          # Đối xứng trái-phải
@@ -119,7 +126,7 @@ THƯ VIỆN PIXCI HỖ TRỢ:
    canvas.stamp((x0,y0), (x1,y1), (target_x, target_y))     # Copy-paste vùng
    canvas.preview()                                            # Xem lại canvas dưới dạng text
 
-8. Lưu file:
+9. Lưu file:
    canvas.save("output.png", scale=10)
 
 QUY TẮC VÀNG CỦA PIXEL ART:
