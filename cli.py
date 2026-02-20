@@ -4,7 +4,10 @@ from pathlib import Path
 from typing import Optional
 from core import encode_image, decode_text, init_canvas
 
-app = typer.Typer(help="PixCI: Công cụ CLI chuyển đổi Ảnh Pixel sang Text cho LLMs.")
+app = typer.Typer(
+    help="PixCI: Công cụ CLI chuyển đổi Ảnh Pixel sang Text cho LLMs.",
+    add_completion=False
+)
 console = Console()
 
 @app.command()
