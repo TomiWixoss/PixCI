@@ -41,19 +41,32 @@ Các thẻ dùng để đổ màu lên ma trận điểm ảnh với tọa độ
   *Thuộc tính:* `c` (mã màu), `pts` (chuỗi tọa độ "x,y x,y...").
 - **`<line>`**: Đường thẳng vẽ bằng thuật toán Bresenham.
   *Thuộc tính:* `x1`, `y1` (Bắt đầu), `x2`, `y2` (Kết thúc), `c` (mã màu).
-- **`<circle>`**: Hình tròn bán kính r (không khử răng cưa).
-  *Thuộc tính:* `cx`, `cy` (tâm), `r` (bán kính), `c` (mã màu).
+- **`<circle>`**: Hình tròn (thuật toán midpoint nén gai).
+  *Thuộc tính:* `cx`, `cy` (tâm), `r` (bán kính), `fill` ("true"/"false"), `c` (mã màu).
+- **`<ellipse>`**: Hình bầu dục tỷ lệ vàng.
+  *Thuộc tính:* `cx`, `cy` (tâm), `rx`, `ry` (bán trục ngang, dọc), `fill` ("true"/"false"), `c`.
+- **`<rounded-rect>`**: Hình chữ nhật bo góc viền.
+  *Thuộc tính:* `x`, `y` (top-left), `w`, `h`, `r` (bán kính góc bo), `c`.
 - **`<polygon>`**: Đa giác đặc.
   *Thuộc tính:* `pts` (chuỗi điểm "x,y x,y..."), `c` (mã màu).
+- **`<curve>`**: Đường cong Bezier 3 điểm (pixel perfect).
+  *Thuộc tính:* `start` ("x,y"), `ctrl` ("x,y"), `end` ("x,y"), `c` (mã màu).
+- **`<cubic-curve>`**: Đường cong Bezier 4 điểm.
+  *Thuộc tính:* `p0`, `p1`, `p2`, `p3` (các tọa độ "x,y"), `c`.
+- **`<bucket>`**: Đổ thùng sơn lấp đầy khoảng trống kín.
+  *Thuộc tính:* `x`, `y` (điểm mồi xuất phát), `c`.
+- **`<dither>`**: Trộn 2 màu đục lỗ (Checkered pattern) tạo độ chuyển vùng.
+  *Thuộc tính:* `x`, `y`, `w`, `h`, `c` (màu chính 1), `c2` (màu xen kẽ 2), `pattern` ("checkered", "bayer"), `ratio` (nếu dùng bayer).
 
-## Các Thẻ Khối Hình Ngữ Nghĩa (Semantic Shapes)
-Giúp định nghĩa nhanh các cấu trúc dạng hữu cơ mà không cần nhổ từng pixel.
-- **`<dome>`**: Hình vòm hoặc nửa Elip (tốt cho nấm, mũ, nửa hình tròn).
-  *Thuộc tính:* `cx` (Tâm x), `y` (Tọa độ y của đáy vòm), `w` (Chiều rộng tối đa), `h` (Chiều cao đỉnh), `c` (mã màu).
-- **`<taper>`**: Khối thuôn nhọn từ 2 đầu (tốt cho rễ, sừng, kiếm, thân cành).
-  *Thuộc tính:* `cx` (Tâm x), `y1` (Tọa độ y trên), `y2` (Tọa độ y dưới), `w1` (Rộng trên), `w2` (Rộng dưới), `c` (mã màu).
-- **`<blob>`**: Khối méo ngẫu nhiên hữu cơ dạng chất lỏng hoặc mây.
-  *Thuộc tính:* `cx`, `cy` (Tâm), `rx`, `ry` (Bán kính bầu dục), `noise` (Độ méo nhiễu, Vd: 0.2), `c` (mã màu).
+## Thao Tác Biến Theo Từng Lớp (Transform & Alpha)
+Sử dụng như một thẻ đơn độc lập bên trong layer hoặc frame `<layer>...<flip-x />...</layer>`
+- **`<alpha-lock>`**: Bật/tắt chế độ khóa Alpha (Các lệnh rải điểm sau thẻ này sẽ chỉ ăn vào vùng ĐÃ CÓ MÀU).
+  *Thuộc tính:* `v` ("true" / "false"). VD: `<alpha-lock v="true" />`
+- **`<translate>`**: Dịch chuyển tịnh tiến. *Thuộc tính:* `dx`, `dy`.
+- **`<flip-x>`**, **`<flip-y>`**: Lật ảnh.
+- **`<mirror-x>`**, **`<mirror-y>`**: Sao chép nửa bức vẽ và tạo ảnh phản chiếu qua tâm gương tạc nắn đối xứng (rất đỉnh cho tạo hình body).
+
+
 
 ## Hậu Kỳ (Post-processing)
 Áp dụng lên toàn bộ Canvas sau khi tất cả các layer đã được rải điểm. Bắt buộc đặt bên trong container `<postprocess>` ở **cuối file**. Đối với animation, hậu kỳ sẽ được áp dụng riêng biệt lên *từng frame* trước khi ghép lại thành Spritesheet.
@@ -62,6 +75,11 @@ Giúp định nghĩa nhanh các cấu trúc dạng hữu cơ mà không cần nh
 - **`<shadow>`** (hoặc `<directional-shadow>`): Đổ bóng ánh sáng toàn cục lên khối 2D.
   *Thuộc tính:* `dir` (Định hướng sáng: `top_left`, `top_right`...), `intensity` (Cường độ bóng 0.0 - 1.0).
 - **`<jaggies>`** (hoặc `<jaggies-cleanup>`): Tự diệt các góc vuông bị cấn hạt hoặc đường răng cưa lỗi trên bản vẽ. Không có thuộc tính.
+- **`<internal-aa>`**: Khử răng cưa (Anti-aliasing) nội sinh, tự vuốt mềm các đoạn ranh giới giao thoa giữa 2 màu nội bộ vật thể.
+- **`<shadow-mask>`**: Phủ bóng tối bo cong dạng hình cầu khối hắt.
+  *Thuộc tính:* `cx`, `cy` (tâm khối cầu), `r` (bán kính), `dir` (Hướng sáng `top_left`, vv...), `intensity` (0.0 -> 1.0).
+- **`<highlight-edge>`**: Đường viền bắt sáng quang học (Rim Light) làm nổi tách vật thể.
+  *Thuộc tính:* `dir`, `intensity`.
 
 ## Animation & Rigging (Hoạt Ảnh và Lắp Ráp)
 PXVG hỗ trợ việc tái sử dụng linh kiện đồ họa thông qua cơ chế Bone & Rigging `<defs>` - `<use>`, giúp tiết kiệm token đáng kể và giữ vững tính liên tục (consistency) của nhân vật khi tạo Spritesheet. 
@@ -85,7 +103,11 @@ PXVG hỗ trợ việc tái sử dụng linh kiện đồ họa thông qua cơ c
   </palette>
   
   <defs>
-    <group id="slime_body"><dome cx="16" y="28" w="20" h="12" c="09" /></group>
+    <group id="slime_body">
+      <rect x="6" y="22" w="20" h="7" c="09" />
+      <row y="21" x1="8" x2="23" c="09" />
+      <row y="20" x1="10" x2="21" c="09" />
+    </group>
     <group id="slime_eyes"><rect x="12" y="20" w="2" h="3" c="01" /></group>
   </defs>
 

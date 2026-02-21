@@ -27,13 +27,73 @@ def _parse_drawing_tags(canvas: Canvas, parent_element: ET.Element, strip_ns):
             x2 = int(attr.get('x2', attr.get('end-x', 0)))
             canvas.draw_rows([(y, x1, x2, c)])
         elif stag == 'circle':
-            cxv = attr.get('cx', '0')
-            cyv = attr.get('cy', '0')
+            cx = int(attr.get('cx', 0))
+            cy = int(attr.get('cy', 0))
             center_str = attr.get('center')
             if center_str:
-                cxv, cyv = center_str.split(',')
+                cx, cy = map(int, center_str.split(','))
             r = int(attr.get('r', attr.get('radius', 1)))
-            canvas.fill_circle((int(cxv), int(cyv)), r, c)
+            fill = str(attr.get('fill', 'true')).lower() == 'true'
+            if fill:
+                canvas.fill_circle((cx, cy), r, c)
+            else:
+                canvas.draw_circle((cx, cy), r, c, pixel_perfect=True)
+        elif stag == 'ellipse':
+            cx = int(attr.get('cx', 0))
+            cy = int(attr.get('cy', 0))
+            center_str = attr.get('center')
+            if center_str:
+                cx, cy = map(int, center_str.split(','))
+            rx = int(attr.get('rx', 1))
+            ry = int(attr.get('ry', 1))
+            fill = str(attr.get('fill', 'true')).lower() == 'true'
+            if fill:
+                canvas.fill_ellipse((cx, cy), rx, ry, c)
+            else:
+                canvas.draw_ellipse((cx, cy), rx, ry, c, pixel_perfect=True)
+        elif stag == 'rounded-rect':
+            x = int(attr.get('x', 0))
+            y = int(attr.get('y', 0))
+            w = int(attr.get('w', 1))
+            h = int(attr.get('h', 1))
+            r = int(attr.get('r', 0))
+            canvas.fill_rounded_rect((x, y), (x + w - 1, y + h - 1), r, c)
+        elif stag == 'curve':
+            start = tuple(map(int, attr.get('start', '0,0').split(',')))
+            ctrl = tuple(map(int, attr.get('ctrl', '0,0').split(',')))
+            end = tuple(map(int, attr.get('end', '0,0').split(',')))
+            canvas.draw_curve(start, ctrl, end, c)
+        elif stag == 'cubic-curve':
+            p0 = tuple(map(int, attr.get('p0', '0,0').split(',')))
+            p1 = tuple(map(int, attr.get('p1', '0,0').split(',')))
+            p2 = tuple(map(int, attr.get('p2', '0,0').split(',')))
+            p3 = tuple(map(int, attr.get('p3', '0,0').split(',')))
+            canvas.draw_cubic_curve(p0, p1, p2, p3, c)
+        elif stag == 'bucket':
+            x = int(attr.get('x', 0))
+            y = int(attr.get('y', 0))
+            canvas.fill_bucket((x, y), c)
+        elif stag == 'dither':
+            x = int(attr.get('x', 0))
+            y = int(attr.get('y', 0))
+            w = int(attr.get('w', 1))
+            h = int(attr.get('h', 1))
+            c2 = attr.get('c2', '#00000000')
+            pattern = attr.get('pattern', 'checkered')
+            ratio = float(attr.get('ratio', 0.5))
+            canvas.fill_dither((x, y, x + w - 1, y + h - 1), c, c2, pattern, ratio)
+        elif stag == 'alpha-lock':
+            canvas.alpha_lock = str(attr.get('v', 'true')).lower() == 'true'
+        elif stag == 'translate':
+            canvas.translate(int(attr.get('dx', 0)), int(attr.get('dy', 0)))
+        elif stag == 'flip-x':
+            canvas.flip_x()
+        elif stag == 'flip-y':
+            canvas.flip_y()
+        elif stag == 'mirror-x':
+            canvas.mirror_x()
+        elif stag == 'mirror-y':
+            canvas.mirror_y()
         elif stag == 'polygon':
             pts_str = attr.get('pts', attr.get('points', ''))
             pts = []
@@ -43,29 +103,7 @@ def _parse_drawing_tags(canvas: Canvas, parent_element: ET.Element, strip_ns):
                     pts.append((int(px), int(py)))
             if pts:
                 canvas.fill_polygon(pts, c)
-        elif stag == 'dome':
-            cx = int(attr.get('cx', attr.get('center-x', 0)))
-            y = int(attr.get('y', attr.get('base-y', 0)))
-            w = int(attr.get('w', attr.get('width', 1)))
-            h = int(attr.get('h', attr.get('height', 1)))
-            canvas.draw_dome(cx, y, w, h, c)
-        elif stag == 'taper':
-            cx = int(attr.get('cx', attr.get('center-x', 0)))
-            y1 = int(attr.get('y1', attr.get('top-y', 0)))
-            y2 = int(attr.get('y2', attr.get('bottom-y', 0)))
-            w1 = int(attr.get('w1', attr.get('top-width', 1)))
-            w2 = int(attr.get('w2', attr.get('bottom-width', 1)))
-            canvas.draw_taper(cx, y1, y2, w1, w2, c)
-        elif stag == 'blob':
-            cxv = attr.get('cx', '0')
-            cyv = attr.get('cy', '0')
-            center_str = attr.get('center')
-            if center_str:
-                cxv, cyv = center_str.split(',')
-            rx = int(attr.get('rx', attr.get('radius-x', 1)))
-            ry = int(attr.get('ry', attr.get('radius-y', 1)))
-            noise = float(attr.get('noise', 0.15))
-            canvas.draw_blob((int(cxv), int(cyv)), rx, ry, c, noise)
+
         elif stag == 'dot':
             x = int(attr.get('x', 0))
             y = int(attr.get('y', 0))
@@ -181,6 +219,19 @@ def decode_pxvg(text_path: Path, output_path: Path, scale: int = 1) -> Tuple[int
                     canvas.apply_directional_shadow(light_dir=d, intensity=i)
                 elif ptag in ['jaggies', 'jaggies-cleanup']:
                     canvas.cleanup_jaggies()
+                elif ptag == 'internal-aa':
+                    canvas.apply_internal_aa()
+                elif ptag == 'shadow-mask':
+                    cx = int(attr.get('cx', 0))
+                    cy = int(attr.get('cy', 0))
+                    r = int(attr.get('r', 1))
+                    d = attr.get('dir', attr.get('light-dir', 'top_left'))
+                    i = float(attr.get('intensity', 0.5))
+                    canvas.apply_shadow_mask((cx, cy), r, light_dir=d, intensity=i)
+                elif ptag == 'highlight-edge':
+                    d = attr.get('dir', attr.get('light-dir', 'top_left'))
+                    i = float(attr.get('intensity', 0.2))
+                    canvas.add_highlight_edge(light_dir=d, intensity=i)
                     
         canvas.save(str(output_path), scale=scale)
         return (width, height)
@@ -254,6 +305,19 @@ def decode_pxvg(text_path: Path, output_path: Path, scale: int = 1) -> Tuple[int
                         fc.apply_directional_shadow(light_dir=d, intensity=i)
                     elif ptag in ['jaggies', 'jaggies-cleanup']:
                         fc.cleanup_jaggies()
+                    elif ptag == 'internal-aa':
+                        fc.apply_internal_aa()
+                    elif ptag == 'shadow-mask':
+                        cx = int(attr.get('cx', 0))
+                        cy = int(attr.get('cy', 0))
+                        r = int(attr.get('r', 1))
+                        d = attr.get('dir', attr.get('light-dir', 'top_left'))
+                        i = float(attr.get('intensity', 0.5))
+                        fc.apply_shadow_mask((cx, cy), r, light_dir=d, intensity=i)
+                    elif ptag == 'highlight-edge':
+                        d = attr.get('dir', attr.get('light-dir', 'top_left'))
+                        i = float(attr.get('intensity', 0.2))
+                        fc.add_highlight_edge(light_dir=d, intensity=i)
             
             # Render frame này ra PIL Image
             fc.merge_all()

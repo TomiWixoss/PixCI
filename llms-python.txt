@@ -1,75 +1,98 @@
 # PixCI Python Code Engine
 > PixCI Python Library là một thư viện hỗ trợ Trí tuệ Nhân tạo (LLMs) vẽ Pixel Art dưới dạng mã lập trình Python (Procedural Python Code) với độ chính xác và tính thẩm mỹ cao. Bằng cách sử dụng các hàm API ngữ nghĩa (Semantic Spatial API), AI không cần phải tính toán từng tọa độ pixel thủ công.
 
-## 1. Khởi tạo Canvas
+## 1. Khởi tạo Canvas & Tiện ích
 Mọi dự án bắt đầu bằng việc import thư viện và tạo Canvas.
 ```python
 import pixci
 canvas = pixci.Canvas(32, 32)
 ```
-- Lưu file sau khi hoàn thành: `canvas.save("output_name.png", scale=10)` (Phải lưu ở cuối code).
+- `canvas.clear(color)`: Xóa active layer hoặc tô Toàn bộ bằng 1 màu.
+- `canvas.save("output_name.png", scale=10)`: Lưu file (scale=10 để phóng to 10 lần).
+- `canvas.preview()`: Dùng để in ra ASCII dạng text xem trước trên terminal lưới pixel (Giúp AI gỡ lỗi).
+- `canvas.load_image("path.png", (x, y))`: Load một ảnh PNG bên ngoài đắp vào layer hiện tại.
+- `canvas.get_pixel((x, y))`: Đọc mã màu RGBA của một điểm ảnh.
 
 ## 2. Hệ thống Bảng màu & Hue-Shifting (Màu sắc)
 Vẽ Pixel Art cần quản lý bằng bảng màu hạn chế (Palette), không dùng trực tiếp mã HEX khi vẽ.
-- **Tải bảng màu có sẵn:** Hỗ trợ hơn 4000 bảng màu.
-  `canvas.load_palette("endesga-32")`
-  `canvas.load_palette("pico-8", prefix="P_")`
+- **Dùng Palette có sẵn:** Hỗ trợ hơn 4000 bảng màu (từ Lospec/Cache).
+  `canvas.load_palette("endesga-32", prefix="E_")`
 - **Khai báo màu thủ công:**
   `canvas.add_palette({"R1": "#E62E2DFF", "G1": "#1E1A20FF"})`
-- **Tự động sinh màu đổ bóng (Hue-Shift):**
+  `canvas.add_color("R1", "#E62E2DFF")`
+- **Sinh màu sáng tối tự động (Hue-Shift):**
   `shades = canvas.auto_shade("#E62E2D", levels=2)` -> Trả về dict: `{"dark2", "dark1", "base", "light1", "light2"}`.
+  `canvas.add_palette(shades)`
+- **Tạo dải màu chuyên nghiệp (Color Ramp):** Sinh ra list các màu gradient thay đổi cả sắc độ (hue) để làm bóng/phản quang rất xịn.
+  `ramp = canvas.generate_ramp("#E8A87C", steps=5, mode="hue_shift")` -> List chứa 5 màu từ tối đến sáng.
+- **Lấy màu tương phản:** `canvas.complementary("base_color")`
+- **Danh sách bảng màu offline:** `canvas.list_palettes()`
 
 ## 3. Hệ thống Hỗ trợ Tọa độ (Spatial Helpers)
 Tránh cộng trừ thủ công. Hãy dùng các hàm dưới đây để lấy biến mốc trước khi vẽ:
 - `cx, cy = canvas.get_center()`: Trung tâm canvas.
 - `ground_y = canvas.get_ground(margin=2)`: Tọa độ y mặt đất để đặt chân vật thể.
-- `y_new = canvas.anchor_above(base_y, offset)`: Lấy tọa độ y dịch LÊN TRÊN.
-- `y_new = canvas.anchor_below(base_y, offset)`: Lấy tọa độ y dịch XUỐNG DƯỚI.
+- `y_new = canvas.anchor_above(base_y, offset)` / `anchor_below()`: Dịch Y lên/xuống.
+- `x_new = canvas.anchor_left_of(base_x, offset)` / `anchor_right_of()`: Dịch X trái/phải.
 - `x0, x1 = canvas.span(center_x, size)`: Tính x_start và x_end đối xứng qua tâm.
-- `x0, y0, x1, y1 = canvas.bbox(cx, cy, w, h)`: Bounding box đối xứng từ tâm.
+- `x0, y0, x1, y1 = canvas.bbox(cx, cy, w, h)`: Tính Bounding box đối xứng từ tâm.
 
-## 4. Quản lý Lớp (Layering & Alpha lock)
+## 4. Quản lý Lớp (Layering) & Snapshot
 Quy hoạch hình từ xa tới gần.
-- `canvas.add_layer("name")`: Tạo và switch sang layer mới.
-- `canvas.set_layer("name")`: Đổi active layer.
-- `canvas.alpha_lock = True/False`: Khi bật True, các hàm vẽ sẽ chỉ ghi đè lên những vùng ĐÃ CÓ MÀU (dùng để tô sáng/tối không bị lem).
-- `canvas.merge_layers("base", "top")`: Trộn layer top xuống layer base.
+- `canvas.add_layer("name")`: Tạo và chuyển sang layer mới.
+- `canvas.set_layer("name")`: Chuyển đổi active layer.
+- `canvas.delete_layer("name")`
+- `canvas.reorder_layers(["bg", "fg"])`
+- `canvas.alpha_lock = True/False`: Khi True, chỉ vẽ đè lên vùng ĐÃ CÓ MÀU.
+- `canvas.merge_layers("base", "top", mode="normal")` (Modes: 'normal', 'multiply', 'add')
+- `canvas.merge_all()`
+- `snap = canvas.snapshot()` / `canvas.restore_snapshot(snap)`: Lưu và Khôi phục layer state hiện tại (Undo).
 
 ## 5. Vẽ Hình Học Cơ Bản (Primitives)
 Luôn truyền tên mã màu (Ví dụ: "R1").
 - `canvas.set_pixel((x, y), "color")`
 - `canvas.draw_line((x0,y0), (x1,y1), "color")`
-- `canvas.fill_rect((x0,y0), (x1,y1), "color")`
-- `canvas.fill_circle((cx, cy), radius, "color")`
+- `canvas.draw_polyline([(x,y)...], "color", closed=True/False)`
+- `canvas.draw_curve(start, control, end, "color")` / `draw_cubic_curve(p0, p1, p2, p3, "color")` (Pixel-perfect Curves)
+- `canvas.fill_rect((x0,y0), (x1,y1), "color")` / `fill_rounded_rect((x0,y0), (x1,y1), radius, "color")`
+- `canvas.fill_circle((cx, cy), radius, "color")` / `draw_circle((cx, cy), radius, "color", pixel_perfect=True)`
+- `canvas.fill_ellipse((cx, cy), rx, ry, "color")` / `draw_ellipse((cx, cy), rx, ry, "color", pixel_perfect=True)`
 - `canvas.fill_polygon([(x1,y1), (x2,y2)...], "color")`
-- **Siêu nén dải pixel (Thay cho nhiều fill_rect):** 
-  `canvas.draw_rows([(y, x_start, x_end, "color"), ...])`
+- `canvas.draw_rows([(y, x_start, x_end, "color"), ...])`: Siêu nén, vẽ nhiều dòng dải ngang ngang 1 lúc (dùng tạo hình).
 
 ## 6. Vẽ Hình Ngữ Nghĩa & Khối Neo (Semantic Shapes)
-Đây là cách tốt nhất để tạo hình khối không cần tính toán phức tạp.
-- `canvas.fill_rect_centered((cx, cy), w, h, "color")`: Hình chữ nhật bung từ tâm.
-- `canvas.fill_ellipse_anchored((cx, cy), rx, ry, "color", align="bottom")`: Elip neo ở đáy (tốt cho bóng dưới chân hoặc chóp nấm).
-- `canvas.draw_dome(cx, base_y, width, height, "color")`: Hình vòm/bán nguyệt úp xuống.
-- `canvas.draw_taper(cx, top_y, bottom_y, top_w, bottom_w, "color")`: Vẽ hình thuôn hẹp dần (thân cành, sừng, rễ).
-- `canvas.draw_blob((cx, cy), rx, ry, "color", noise=0.15)`: Khối bất định (chất lỏng, mây).
-- `canvas.draw_gem((cx, cy), width, height, ["dark_color", "mid", "light"])`: Vẽ khối pha lê nứt góc đa diện.
+Cách tốt nhất để tự động vẽ mà không cần căn tọa độ phức tạp.
+- `canvas.fill_rect_centered((cx, cy), w, h, "color")`
+- `canvas.fill_ellipse_anchored((ax, ay), rx, ry, "color", align="bottom")` (align: "center", "bottom", "top")
+- `canvas.fill_rect_anchored((ax, ay), w, h, "color", align="bottom_left")` (align: "center", "bottom", "top", "bottom_left", "bottom_right")
 
-## 7. Đổ Bóng & Gradient 3D (3D Rendering)
-Các hàm yêu cầu List Palette cho gradient 3D.
-- `canvas.draw_sphere((cx, cy), radius, ["dark", "mid", "light"], light_dir="top_left")`
-- `canvas.fill_cylinder((cx, base_y), width, height, ["dark", "mid", "light"], light_dir="top_left")`
-- `canvas.fill_dither((x0,y0,x1,y1), "color1", "color2", pattern="checkered")`: Trộn màu cổ điển (bayer, checkered).
 
-## 8. Xử lý Hậu kỳ (Post-processing)
-Thực hiện ở QUÁ TRÌNH CUỐI sau khi đã vẽ xong và gom layers.
-- **Tạo viền tự động:**
-  `canvas.add_outline(thickness=1, sel_out=True)` (sel_out=True sẽ tự động lấy màu vật thể, làm đậm đi để làm viền, tạo cảm giác mượt mà hơn màu đen tuyền).
-- **Phủ bóng toàn cục (Directional Shadow):**
-  `canvas.apply_directional_shadow(light_dir="top_left", intensity=0.3)`
-- **Xóa cấn viền/Khử răng cưa:**
-  `canvas.cleanup_jaggies()`
-- **Làm sáng viền ngược sáng (Highlight):**
-  `canvas.add_highlight_edge(light_dir="top_left", intensity=0.2)`
+## 7. Biến đổi & Chỉnh Sửa (Transform)
+- `canvas.translate(dx, dy)`: Dịch chuyển toàn vẹn mảng pixel của layer hiện tại.
+- `canvas.flip_x()` / `canvas.flip_y()`: Lật chảo qua trục.
+- `canvas.mirror_x(axis_x)` / `canvas.mirror_y(axis_y)`: Tạo ảnh đối xứng, copy nửa này lật sang nửa kia.
+- `canvas.fill_bucket((x,y), "color")`: Tô màu thùng sơn cho vùng kín.
+- **Làm việc với Vùng Cắt (Copy/Paste):**
+  - `copied = canvas.copy_region((x0,y0), (x1,y1))`
+  - `canvas.paste_region(copied, (x, y), skip_transparent=True)`
+  - `canvas.stamp((x0,y0), (x1,y1), target=(x,y))`: Shortcut copy và dán ngay.
+  - `canvas.paste(other_canvas_obj, (x,y))`
+
+## 8. Đổ Bóng & Xử lý Hậu kỳ (Rendering & Post-processing)
+Thường làm từ nửa sau quá trình vẽ.
+- `canvas.fill_dither((x0,y0,x1,y1), "c1", "c2", pattern="checkered")`: Trộn pixel ('bayer', '25_percent', '50_percent').
+- Khối Cầu:
+  - `canvas.draw_sphere((cx, cy), radius, ["dark", "mid", "light"], light_dir="top_left")`
+  - `canvas.draw_half_sphere((cx, cy), radius, ["d","m","l"], light_dir="top_left")`
+  - `canvas.fill_cylinder((cx, base_y), w, h, ["d","m","l"], light_dir="top_left")`
+- Lớp Bóng (Shadow/Highlights):
+  - `canvas.apply_shadow_mask((cx, cy), radius, light_dir="top_left", intensity=0.5)`: Bóng cầu đổ.
+  - `canvas.apply_directional_shadow(light_dir="top_left", intensity=0.3)`: Bóng dẹt toàn mặt canvas (cho vật thể dẹp/dài).
+  - `canvas.add_highlight_edge(light_dir="top_left", intensity=0.2)`: Viền bóng sáng (rim light).
+- Viền Ngoài & Đẹp cạnh:
+  - `canvas.add_outline(thickness=1, sel_out=True)`: `sel_out=True` sẽ dùng màu tự động từ nội bộ để làm viền thông minh (thay vì vứt viền đen).
+  - `canvas.cleanup_jaggies()`: Khử điểm ảnh thừa cứng ngắc (răng cưa/l-shapes).
+  - `canvas.apply_internal_aa()`: Smoothens (khử răng cưa) viền giữa 2 màu nội bộ (Anti-aliasing).
 
 ## 9. Hệ thống Animation (Ảnh động)
 Bạn có thể cấu trúc các frames và liên kết chúng thành spritesheet/gif bằng class `Animation`.
@@ -79,22 +102,24 @@ anim = pixci.Animation(32, 32, columns=4, fps=5)
 
 # Cấu hình palette (dùng chung cho mọi frame)
 anim.add_palette({"09": "#6ABE30FF", "10": "#37946EFF"})
-# hoặc anim.load_palette("pico-8")
+# hoặc dùng: anim.load_palette("pico-8") / anim.auto_shade(...)
 
-# Tạo một Canvas component (để tái sử dụng)
+# Tạo một Canvas component (để tái sử dụng làm body)
 body = pixci.Canvas(32, 32)
-body.draw_dome(16, 28, 20, 12, "09")
+# Tự vẽ một thân hình tuỳ biến (Không dùng macro cứng)
+body.fill_rect_anchored((16, 28), 12, 10, "09", align="bottom")
+body.fill_ellipse_anchored((16, 18), 6, 4, "10", align="bottom")
 
 # Frame 1
 f1 = anim.add_frame()
-f1.paste(body, (0, 0)) # Vẽ body ở vị trí gốc
-f1.add_outline(thickness=1, sel_out=False) # Post-process trên từng frame
+f1.paste(body, (0, 0)) # copy canvas vô frame gốc
+f1.add_outline(thickness=1, sel_out=False) # Xử lý hậu kỳ từng frame
 
 # Frame 2
 f2 = anim.add_frame()
-f2.paste(body, (0, -4)) # Di chuyển body lên trên 4 pixels (nảy lên)
+f2.paste(body, (0, -4)) # Di chuyển toàn khối body lên 4 pixels (nảy lên)
 f2.add_outline(thickness=1, sel_out=False)
 
-# Render thành .png (Spritesheet tự tính theo columns) và .gif
-anim.save("slime_jump.png", scale=10)
+# Tự động tạo jump.png (spritesheet lưới ngang) và jump.gif
+anim.save("jump.png", scale=10) 
 ```
