@@ -1,0 +1,64 @@
+# PXVG (Pixel Vector Graphics)
+> PXVG là một ngôn ngữ đánh dấu (Markup Language) dựa trên XML, được thiết kế đặc biệt làm mã trung gian (Static IR) để định nghĩa và sinh hình ảnh Pixel Art. PXVG cho phép định nghĩa các khối, đường nét, điểm ảnh lẻ và các hình học ngữ nghĩa một cách ngắn gọn, tối ưu hóa kích thước chuỗi (Token) và đảm bảo an toàn tuyệt đối khi parse.
+
+## Cấu trúc gốc
+Mọi file PXVG phải được bao bọc trong thẻ `<pxvg>` với các thuộc tính kích thước Canvas.
+```xml
+<pxvg w="32" h="32" xmlns="http://pixci.dev/pxvg">
+  <!-- Nội dung bản vẽ -->
+</pxvg>
+```
+
+## Bảng màu (Palette)
+Định nghĩa các mã màu sử dụng trong bản vẽ. Có hai cách:
+1. Sử dụng palette có sẵn (ví dụ: `endesga-32`, `pico-8`):
+   `<palette load="endesga-32" />`
+2. Tự định nghĩa các màu cụ thể (gắn mã key 1 ký tự để tiết kiệm token khi gọi):
+   ```xml
+   <palette>
+     <color k="A" hex="#1C1C1EFF" />
+     <color k="B" hex="#FF0000FF" />
+   </palette>
+   ```
+
+## Hệ thống Lớp (Layers)
+Các đối tượng đồ họa được phân rã theo lớp để quản lý trật tự vẽ (overlap). Các thẻ vẽ phải nằm trong thẻ `<layer>`.
+```xml
+<layer id="main">
+  <!-- Chi tiết nét vẽ -->
+</layer>
+```
+
+## Các Thẻ Hình Học Cơ Bản (Primitives)
+Các thẻ dùng để đổ màu lên ma trận điểm ảnh với tọa độ bắt buộc là **số nguyên (Integer)**.
+- **`<rect>`**: Hình chữ nhật đặc.
+  *Thuộc tính:* `x`, `y` (tọa độ góc trái trên), `w` (rộng), `h` (cao), `c` (mã màu).
+- **`<row>`**: Chuỗi điểm ngang kéo dài liên tục trên 1 hàng y. (Dùng để tối ưu token).
+  *Thuộc tính:* `y` (hàng), `x1` (cột bắt đầu), `x2` (cột kết thúc), `c` (mã màu).
+- **`<dot>`**: Một điểm ảnh đơn lẻ.
+  *Thuộc tính:* `x`, `y`, `c` (mã màu).
+- **`<dots>`**: Tập hợp nhiều điểm ảnh đơn lẻ dùng chung một màu (siêu nén).
+  *Thuộc tính:* `c` (mã màu), `pts` (chuỗi tọa độ "x,y x,y...").
+- **`<line>`**: Đường thẳng vẽ bằng thuật toán Bresenham.
+  *Thuộc tính:* `x1`, `y1` (Bắt đầu), `x2`, `y2` (Kết thúc), `c` (mã màu).
+- **`<circle>`**: Hình tròn bán kính r (không khử răng cưa).
+  *Thuộc tính:* `cx`, `cy` (tâm), `r` (bán kính), `c` (mã màu).
+- **`<polygon>`**: Đa giác đặc.
+  *Thuộc tính:* `pts` (chuỗi điểm "x,y x,y..."), `c` (mã màu).
+
+## Các Thẻ Khối Hình Ngữ Nghĩa (Semantic Shapes)
+Giúp định nghĩa nhanh các cấu trúc dạng hữu cơ mà không cần nhổ từng pixel.
+- **`<dome>`**: Hình vòm hoặc nửa Elip (tốt cho nấm, mũ, nửa hình tròn).
+  *Thuộc tính:* `cx` (Tâm x), `y` (Tọa độ y của đáy vòm), `w` (Chiều rộng tối đa), `h` (Chiều cao đỉnh), `c` (mã màu).
+- **`<taper>`**: Khối thuôn nhọn từ 2 đầu (tốt cho rễ, sừng, kiếm, thân cành).
+  *Thuộc tính:* `cx` (Tâm x), `y1` (Tọa độ y trên), `y2` (Tọa độ y dưới), `w1` (Rộng trên), `w2` (Rộng dưới), `c` (mã màu).
+- **`<blob>`**: Khối méo ngẫu nhiên hữu cơ dạng chất lỏng hoặc mây.
+  *Thuộc tính:* `cx`, `cy` (Tâm), `rx`, `ry` (Bán kính bầu dục), `noise` (Độ méo nhiễu, Vd: 0.2), `c` (mã màu).
+
+## Hậu Kỳ (Post-processing)
+Áp dụng lên toàn bộ Canvas sau khi tất cả các layer đã được rải điểm. Bắt buộc đặt bên trong container `<postprocess>` ở **cuối file**.
+- **`<outline>`**: Viền tự động.
+  *Thuộc tính:* `sel-out` (True/False - nếu `true`, lấy màu vật thể làm viền rồi tô đậm đi và đổi tone màu), `thickness` (Độ dày), `color` (Nếu `sel-out="false"`, dùng màu gán sẵn, Vd: "#000000FF").
+- **`<shadow>`** (hoặc `<directional-shadow>`): Đổ bóng ánh sáng toàn cục lên khối 2D.
+  *Thuộc tính:* `dir` (Định hướng sáng: `top_left`, `top_right`...), `intensity` (Cường độ bóng 0.0 - 1.0).
+- **`<jaggies>`** (hoặc `<jaggies-cleanup>`): Tự diệt các góc vuông bị cấn hạt hoặc đường răng cưa lỗi trên bản vẽ. Không có thuộc tính.
