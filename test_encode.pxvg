@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pxvg w="320" h="320" xmlns="http://pixci.dev/pxvg">
+  <palette>
+    <color k="0" hex="#473D28FF" />
+    <color k="1" hex="#441101FF" />
+    <color k="2" hex="#410F01FF" />
+    <color k="3" hex="#3D0E01FF" />
+    <color k="4" hex="#4A1804FF" />
+    <color k="5" hex="#B39A8CFF" />
+    <color k="6" hex="#463C29FF" />
+    <color k="7" hex="#B2998BFF" />
+    <color k="8" hex="#AF9688FF" />
+    <color k="9" hex="#443A28FF" />
+    <color k="A" hex="#601D00FF" />
+    <color k="AA" hex="#E6D3C2FF" />
+    <color k="AB" hex="#E2CFBFFF" />
+    <color k="AC" hex="#AD9587FF" />
+    <color k="AD" hex="#AA9184FF" />
+    <color k="AE" hex="#413828FF" />
+    <color k="AF" hex="#705D23FF" />
+    <color k="AG" hex="#E5D2C2FF" />
+    <color k="AH" hex="#DFCCBCFF" />
+    <color k="AI" hex="#DBC8B9FF" />
+    <color k="AJ" hex="#A88F83FF" />
+    <color k="AK" hex="#A48C80FF" />
+    <color k="AL" hex="#3E3628FF" />
+    <color k="AM" hex="#665828FF" />
+    <color k="AN" hex="#DDCBBBFF" />
+    <color k="AO" hex="#DAC8B9FF" />
+    <color k="AP" hex="#D7C4B6FF" />
+    <color k="AQ" hex="#D3C1B3FF" />
+    <color k="AR" hex="#A28A7EFF" />
+    <color k="AS" hex="#9E867CFF" />
+    <color k="AT" hex="#3A3327FF" />
+    <color k="AU" hex="#0A2E21FF" />
+    <color k="AV" hex="#12442FFF" />
+    <color k="AW" hex="#5D502BFF" />
+    <color k="AX" hex="#D5C2B4FF" />
+    <color k="AY" hex="#D2BFB1FF" />
+    <color k="AZ" hex="#CEBCAFFF" />
+    <color k="Aa" hex="#CBB8ABFF" />
+    <color k="Ab" hex="#9B8479FF" />
+    <color k="Ac" hex="#988077FF" />
+    <color k="Ad" hex="#373026FF" />
+    <color k="Ae" hex="#2A7A44FF" />
+    <color k="Af" hex="#45B363FF" />
+    <color k="Ag" hex="#CAB8ABFF" />
+    <color k="Ah" hex="#C8B5A9FF" />
+    <color k="Ai" hex="#C5B2A6FF" />
+    <color k="Aj" hex="#C1AEA3FF" />
+    <color k="Ak" hex="#947C74FF" />
+    <color k="Al" hex="#907971FF" />
+    <color k="Am" hex="#BDABA0FF" />
+    <color k="An" hex="#BBA99FFF" />
+    <color k="Ao" hex="#B8A69CFF" />
+    <color k="Ap" hex="#B5A299FF" />
+    <color k="Aq" hex="#8A746DFF" />
+    <color k="Ar" hex="#86706AFF" />
+    <color k="As" hex="#836D67FF" />
+    <color k="B" hex="#7E2600FF" />
+    <color k="C" hex="#E62E2DFF" />
+    <color k="D" hex="#FF6B6BFF" />
+    <color k="E" hex="#B31C26FF" />
+    <color k="F" hex="#461101FF" />
+    <color k="G" hex="#FFFFFFFF" />
+    <color k="H" hex="#B11B25FF" />
+    <color k="I" hex="#AB1A24FF" />
+    <color k="J" hex="#431001FF" />
+    <color k="K" hex="#AF1B25FF" />
+    <color k="L" hex="#A91A24FF" />
+    <color k="M" hex="#421001FF" />
+    <color k="N" hex="#FDFDFDFF" />
+    <color k="O" hex="#AC1A25FF" />
+    <color k="P" hex="#A61924FF" />
+    <color k="Q" hex="#A01823FF" />
+    <color k="R" hex="#3F0E01FF" />
+    <color k="S" hex="#F8F8F8FF" />
+    <color k="T" hex="#A31923FF" />
+    <color k="U" hex="#9D1823FF" />
+    <color k="V" hex="#491704FF" />
+    <color k="W" hex="#E0E0E0FF" />
+    <color k="X" hex="#E22D2CFF" />
+    <color k="Y" hex="#AB1A25FF" />
+    <color k="Z" hex="#9A1722FF" />
+    <color k="a" hex="#BB2427FF" />
+    <color k="b" hex="#E42D2CFF" />
+    <color k="c" hex="#DE2C2BFF" />
+    <color k="d" hex="#A81A24FF" />
+    <color k="e" hex="#A21923FF" />
+    <color k="f" hex="#961722FF" />
+    <color k="g" hex="#B62326FF" />
+    <color k="h" hex="#471704FF" />
+    <color k="i" hex="#B21B25FF" />
+    <color k="j" hex="#AE1B25FF" />
+    <color k="k" hex="#A41924FF" />
+    <color k="l" hex="#9F1823FF" />
+    <color k="m" hex="#991722FF" />
+    <color k="n" hex="#B12225FF" />
+    <color k="o" hex="#451604FF" />
+    <color k="p" hex="#AA1A24FF" />
+    <color k="q" hex="#A51924FF" />
+    <color k="r" hex="#9B1722FF" />
+    <color k="s" hex="#BE2527FF" />
+    <color k="t" hex="#B52326FF" />
+    <color k="u" hex="#AB2125FF" />
+    <color k="v" hex="#431504FF" />
+    <color k="w" hex="#756220FF" />
+    <color k="x" hex="#E8D5C4FF" />
+    <color k="y" hex="#1E1A20FF" />
+    <color k="z" hex="#B59C8DFF" />
+  </palette>
+  <layer id="main">
+    <rect x="160" y="70" w="10" h="10" c="A" />
+    <rect x="110" y="80" w="40" h="10" c="B" />
+    <rect x="150" y="80" w="10" h="10" c="A" />
+    <rect x="160" y="80" w="10" h="50" c="C" />
+    <rect x="170" y="80" w="50" h="10" c="A" />
+    <rect x="90" y="90" w="20" h="10" c="B" />
+    <rect x="110" y="90" w="40" h="10" c="D" />
+    <rect x="150" y="90" w="10" h="40" c="C" />
+    <rect x="170" y="90" w="50" h="40" c="C" />
+    <rect x="220" y="90" w="20" h="10" c="A" />
+    <rect x="80" y="100" w="10" h="10" c="B" />
+    <rect x="90" y="100" w="40" h="10" c="D" />
+    <rect x="130" y="100" w="20" h="60" c="C" />
+    <rect x="220" y="100" w="20" h="70" c="C" />
+    <rect x="240" y="100" w="10" h="10" c="A" />
+    <rect x="70" y="110" w="10" h="10" c="B" />
+    <rect x="80" y="110" w="20" h="10" c="D" />
+    <rect x="100" y="110" w="30" h="30" c="C" />
+    <rect x="240" y="110" w="10" h="30" c="E" />
+    <rect x="250" y="110" w="10" h="10" c="F" />
+    <rect x="60" y="120" w="10" h="10" c="A" />
+    <rect x="70" y="120" w="30" h="40" c="C" />
+    <rect x="250" y="120" w="10" h="10" c="E" />
+    <rect x="260" y="120" w="10" h="10" c="F" />
+    <rect x="50" y="130" w="10" h="20" c="A" />
+    <rect x="60" y="130" w="10" h="80" c="C" />
+    <rect x="150" y="130" w="30" h="10" c="G" />
+    <rect x="180" y="130" w="40" h="30" c="C" />
+    <rect x="250" y="130" w="10" h="10" c="H" />
+    <rect x="260" y="130" w="10" h="10" c="I" />
+    <rect x="270" y="130" w="10" h="10" c="J" />
+    <rect x="100" y="140" w="10" h="10" c="C" />
+    <rect x="110" y="140" w="10" h="50" c="G" />
+    <rect x="120" y="140" w="10" h="10" c="C" />
+    <rect x="150" y="140" w="30" h="50" c="C" />
+    <rect x="240" y="140" w="10" h="10" c="G" />
+    <rect x="250" y="140" w="10" h="10" c="K" />
+    <rect x="260" y="140" w="10" h="10" c="L" />
+    <rect x="270" y="140" w="10" h="10" c="M" />
+    <rect x="40" y="150" w="10" h="20" c="A" />
+    <rect x="50" y="150" w="10" h="60" c="C" />
+    <rect x="100" y="150" w="10" h="30" c="G" />
+    <rect x="120" y="150" w="10" h="20" c="G" />
+    <rect x="240" y="150" w="10" h="10" c="N" />
+    <rect x="250" y="150" w="10" h="10" c="O" />
+    <rect x="260" y="150" w="10" h="10" c="P" />
+    <rect x="270" y="150" w="10" h="10" c="Q" />
+    <rect x="280" y="150" w="10" h="10" c="R" />
+    <rect x="70" y="160" w="10" h="30" c="G" />
+    <rect x="80" y="160" w="10" h="50" c="C" />
+    <rect x="90" y="160" w="10" h="10" c="G" />
+    <rect x="130" y="160" w="10" h="10" c="G" />
+    <rect x="140" y="160" w="10" h="30" c="C" />
+    <rect x="180" y="160" w="30" h="10" c="C" />
+    <rect x="210" y="160" w="10" h="20" c="G" />
+    <rect x="240" y="160" w="10" h="10" c="S" />
+    <rect x="250" y="160" w="10" h="10" c="L" />
+    <rect x="260" y="160" w="10" h="10" c="T" />
+    <rect x="270" y="160" w="10" h="10" c="U" />
+    <rect x="280" y="160" w="10" h="10" c="V" />
+    <rect x="30" y="170" w="10" h="40" c="A" />
+    <rect x="40" y="170" w="10" h="40" c="C" />
+    <rect x="90" y="170" w="10" h="40" c="C" />
+    <rect x="120" y="170" w="10" h="10" c="W" />
+    <rect x="130" y="170" w="10" h="20" c="C" />
+    <rect x="180" y="170" w="20" h="20" c="C" />
+    <rect x="200" y="170" w="10" h="10" c="G" />
+    <rect x="220" y="170" w="10" h="10" c="G" />
+    <rect x="230" y="170" w="10" h="10" c="X" />
+    <rect x="240" y="170" w="10" h="10" c="Y" />
+    <rect x="250" y="170" w="10" h="10" c="P" />
+    <rect x="260" y="170" w="10" h="10" c="Q" />
+    <rect x="270" y="170" w="10" h="10" c="Z" />
+    <rect x="280" y="170" w="10" h="10" c="a" />
+    <rect x="290" y="170" w="10" h="10" c="V" />
+    <rect x="100" y="180" w="10" h="30" c="C" />
+    <rect x="120" y="180" w="10" h="10" c="C" />
+    <rect x="200" y="180" w="10" h="10" c="C" />
+    <rect x="210" y="180" w="10" h="10" c="W" />
+    <rect x="220" y="180" w="10" h="10" c="b" />
+    <rect x="230" y="180" w="10" h="10" c="c" />
+    <rect x="240" y="180" w="10" h="10" c="d" />
+    <rect x="250" y="180" w="10" h="10" c="e" />
+    <rect x="260" y="180" w="10" h="10" c="U" />
+    <rect x="270" y="180" w="10" h="10" c="f" />
+    <rect x="280" y="180" w="10" h="10" c="g" />
+    <rect x="290" y="180" w="10" h="10" c="h" />
+    <rect x="70" y="190" w="10" h="20" c="C" />
+    <rect x="110" y="190" w="10" h="10" c="C" />
+    <rect x="120" y="190" w="90" h="10" c="E" />
+    <rect x="210" y="190" w="10" h="10" c="i" />
+    <rect x="220" y="190" w="10" h="10" c="j" />
+    <rect x="230" y="190" w="10" h="10" c="L" />
+    <rect x="240" y="190" w="10" h="10" c="k" />
+    <rect x="250" y="190" w="10" h="10" c="l" />
+    <rect x="260" y="190" w="10" h="10" c="m" />
+    <rect x="270" y="190" w="10" h="10" c="a" />
+    <rect x="280" y="190" w="10" h="10" c="n" />
+    <rect x="290" y="190" w="10" h="10" c="o" />
+    <rect x="110" y="200" w="90" h="10" c="E" />
+    <rect x="200" y="200" w="10" h="10" c="i" />
+    <rect x="210" y="200" w="10" h="10" c="j" />
+    <rect x="220" y="200" w="10" h="10" c="p" />
+    <rect x="230" y="200" w="10" h="10" c="q" />
+    <rect x="240" y="200" w="10" h="10" c="Q" />
+    <rect x="250" y="200" w="10" h="10" c="r" />
+    <rect x="260" y="200" w="10" h="10" c="s" />
+    <rect x="270" y="200" w="10" h="10" c="t" />
+    <rect x="280" y="200" w="10" h="10" c="u" />
+    <rect x="290" y="200" w="10" h="10" c="v" />
+    <rect x="40" y="210" w="70" h="10" c="A" />
+    <rect x="110" y="210" w="10" h="10" c="F" />
+    <rect x="120" y="210" w="10" h="40" c="w" />
+    <rect x="130" y="210" w="30" h="30" c="x" />
+    <rect x="160" y="210" w="10" h="10" c="y" />
+    <rect x="170" y="210" w="20" h="10" c="z" />
+    <rect x="190" y="210" w="10" h="10" c="0" />
+    <rect x="200" y="210" w="10" h="10" c="F" />
+    <rect x="210" y="210" w="10" h="10" c="1" />
+    <rect x="220" y="210" w="10" h="10" c="J" />
+    <rect x="230" y="210" w="10" h="10" c="2" />
+    <rect x="240" y="210" w="10" h="10" c="R" />
+    <rect x="250" y="210" w="10" h="10" c="3" />
+    <rect x="260" y="210" w="10" h="10" c="4" />
+    <rect x="270" y="210" w="10" h="10" c="h" />
+    <rect x="280" y="210" w="10" h="10" c="v" />
+    <rect x="160" y="220" w="10" h="20" c="x" />
+    <rect x="170" y="220" w="10" h="10" c="z" />
+    <rect x="180" y="220" w="10" h="10" c="5" />
+    <rect x="190" y="220" w="10" h="10" c="6" />
+    <rect x="170" y="230" w="10" h="10" c="7" />
+    <rect x="180" y="230" w="10" h="10" c="8" />
+    <rect x="190" y="230" w="10" h="10" c="9" />
+    <rect x="130" y="240" w="20" h="10" c="x" />
+    <rect x="150" y="240" w="10" h="10" c="AA" />
+    <rect x="160" y="240" w="10" h="10" c="AB" />
+    <rect x="170" y="240" w="10" h="10" c="AC" />
+    <rect x="180" y="240" w="10" h="10" c="AD" />
+    <rect x="190" y="240" w="10" h="10" c="AE" />
+    <rect x="120" y="250" w="10" h="10" c="AF" />
+    <rect x="130" y="250" w="10" h="10" c="AG" />
+    <rect x="140" y="250" w="10" h="10" c="AB" />
+    <rect x="150" y="250" w="10" h="10" c="AH" />
+    <rect x="160" y="250" w="10" h="10" c="AI" />
+    <rect x="170" y="250" w="10" h="10" c="AJ" />
+    <rect x="180" y="250" w="10" h="10" c="AK" />
+    <rect x="190" y="250" w="10" h="10" c="AL" />
+    <rect x="120" y="260" w="10" h="10" c="AM" />
+    <rect x="130" y="260" w="10" h="10" c="AN" />
+    <rect x="140" y="260" w="10" h="10" c="AO" />
+    <rect x="150" y="260" w="10" h="10" c="AP" />
+    <rect x="160" y="260" w="10" h="10" c="AQ" />
+    <rect x="170" y="260" w="10" h="10" c="AR" />
+    <rect x="180" y="260" w="10" h="10" c="AS" />
+    <rect x="190" y="260" w="10" h="10" c="AT" />
+    <rect x="30" y="270" w="20" h="10" c="AU" />
+    <rect x="50" y="270" w="10" h="10" c="AV" />
+    <rect x="60" y="270" w="60" h="10" c="AU" />
+    <rect x="120" y="270" w="10" h="10" c="AW" />
+    <rect x="130" y="270" w="10" h="10" c="AX" />
+    <rect x="140" y="270" w="10" h="10" c="AY" />
+    <rect x="150" y="270" w="10" h="10" c="AZ" />
+    <rect x="160" y="270" w="10" h="10" c="Aa" />
+    <rect x="170" y="270" w="10" h="10" c="Ab" />
+    <rect x="180" y="270" w="10" h="10" c="Ac" />
+    <rect x="190" y="270" w="10" h="10" c="Ad" />
+    <rect x="200" y="270" w="90" h="10" c="AU" />
+    <rect x="290" y="270" w="10" h="10" c="AV" />
+    <rect x="10" y="280" w="20" h="10" c="AV" />
+    <rect x="30" y="280" w="20" h="10" c="Ae" />
+    <rect x="50" y="280" w="10" h="20" c="Af" />
+    <rect x="60" y="280" w="70" h="10" c="Ae" />
+    <rect x="130" y="280" w="10" h="10" c="Ag" />
+    <rect x="140" y="280" w="10" h="10" c="Ah" />
+    <rect x="150" y="280" w="10" h="10" c="Ai" />
+    <rect x="160" y="280" w="10" h="10" c="Aj" />
+    <rect x="170" y="280" w="10" h="10" c="Ak" />
+    <rect x="180" y="280" w="10" h="10" c="Al" />
+    <rect x="190" y="280" w="100" h="10" c="Ae" />
+    <rect x="290" y="280" w="10" h="20" c="Af" />
+    <rect x="300" y="280" w="10" h="10" c="AV" />
+    <rect x="0" y="290" w="10" h="10" c="AV" />
+    <rect x="10" y="290" w="40" h="20" c="Af" />
+    <rect x="60" y="290" w="10" h="10" c="Ae" />
+    <rect x="70" y="290" w="10" h="10" c="Af" />
+    <rect x="80" y="290" w="10" h="10" c="Ae" />
+    <rect x="90" y="290" w="10" h="10" c="Af" />
+    <rect x="100" y="290" w="10" h="10" c="Ae" />
+    <rect x="110" y="290" w="10" h="10" c="Af" />
+    <rect x="120" y="290" w="20" h="10" c="Am" />
+    <rect x="140" y="290" w="10" h="10" c="An" />
+    <rect x="150" y="290" w="10" h="10" c="Ao" />
+    <rect x="160" y="290" w="10" h="10" c="Ap" />
+    <rect x="170" y="290" w="10" h="10" c="Aq" />
+    <rect x="180" y="290" w="10" h="10" c="Ar" />
+    <rect x="190" y="290" w="10" h="10" c="As" />
+    <rect x="200" y="290" w="10" h="10" c="Ae" />
+    <rect x="210" y="290" w="10" h="10" c="Af" />
+    <rect x="220" y="290" w="10" h="10" c="Ae" />
+    <rect x="230" y="290" w="10" h="10" c="Af" />
+    <rect x="240" y="290" w="10" h="10" c="Ae" />
+    <rect x="250" y="290" w="10" h="10" c="Af" />
+    <rect x="260" y="290" w="10" h="10" c="Ae" />
+    <rect x="270" y="290" w="10" h="10" c="Af" />
+    <rect x="280" y="290" w="10" h="10" c="Ae" />
+    <rect x="300" y="290" w="10" h="20" c="Af" />
+    <rect x="310" y="290" w="10" h="10" c="AV" />
+    <rect x="0" y="300" w="10" h="10" c="Af" />
+    <rect x="50" y="300" w="10" h="20" c="Ae" />
+    <rect x="60" y="300" w="10" h="10" c="Af" />
+    <rect x="70" y="300" w="10" h="20" c="Ae" />
+    <rect x="80" y="300" w="10" h="10" c="Af" />
+    <rect x="90" y="300" w="10" h="20" c="Ae" />
+    <rect x="100" y="300" w="10" h="10" c="Af" />
+    <rect x="110" y="300" w="10" h="20" c="Ae" />
+    <rect x="120" y="300" w="10" h="10" c="Af" />
+    <rect x="130" y="300" w="10" h="20" c="Ae" />
+    <rect x="140" y="300" w="10" h="10" c="Af" />
+    <rect x="150" y="300" w="10" h="20" c="Ae" />
+    <rect x="160" y="300" w="10" h="10" c="Af" />
+    <rect x="170" y="300" w="10" h="20" c="Ae" />
+    <rect x="180" y="300" w="10" h="10" c="Af" />
+    <rect x="190" y="300" w="10" h="20" c="Ae" />
+    <rect x="200" y="300" w="10" h="10" c="Af" />
+    <rect x="210" y="300" w="10" h="20" c="Ae" />
+    <rect x="220" y="300" w="10" h="10" c="Af" />
+    <rect x="230" y="300" w="10" h="20" c="Ae" />
+    <rect x="240" y="300" w="10" h="10" c="Af" />
+    <rect x="250" y="300" w="10" h="20" c="Ae" />
+    <rect x="260" y="300" w="10" h="10" c="Af" />
+    <rect x="270" y="300" w="10" h="20" c="Ae" />
+    <rect x="280" y="300" w="10" h="10" c="Af" />
+    <rect x="290" y="300" w="10" h="20" c="Ae" />
+    <rect x="310" y="300" w="10" h="10" c="Af" />
+    <rect x="0" y="310" w="10" h="10" c="AV" />
+    <rect x="10" y="310" w="40" h="10" c="Ae" />
+    <rect x="60" y="310" w="10" h="10" c="Ae" />
+    <rect x="80" y="310" w="10" h="10" c="Ae" />
+    <rect x="100" y="310" w="10" h="10" c="Ae" />
+    <rect x="120" y="310" w="10" h="10" c="Ae" />
+    <rect x="140" y="310" w="10" h="10" c="Ae" />
+    <rect x="160" y="310" w="10" h="10" c="Ae" />
+    <rect x="180" y="310" w="10" h="10" c="Ae" />
+    <rect x="200" y="310" w="10" h="10" c="Ae" />
+    <rect x="220" y="310" w="10" h="10" c="Ae" />
+    <rect x="240" y="310" w="10" h="10" c="Ae" />
+    <rect x="260" y="310" w="10" h="10" c="Ae" />
+    <rect x="280" y="310" w="10" h="10" c="Ae" />
+    <rect x="300" y="310" w="10" h="10" c="Ae" />
+    <rect x="310" y="310" w="10" h="10" c="AV" />
+  </layer>
+</pxvg>

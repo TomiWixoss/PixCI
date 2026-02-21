@@ -3,6 +3,7 @@ from rich.console import Console
 from pathlib import Path
 from typing import Optional
 from .core.grid_engine import encode_image, encode_code, decode_text, init_canvas, init_code_canvas
+from .core.pxvg_engine import encode_pxvg, decode_pxvg
 
 app = typer.Typer(
     help="PixCI: Công cụ CLI chuyển đổi Ảnh Pixel sang Text cho LLMs.",
@@ -14,7 +15,7 @@ console = Console()
 def encode(
     image_path: Path = typer.Argument(..., help="Đường dẫn file ảnh đầu vào"),
     output: Path = typer.Option(..., "-o", "--output", help="Đường dẫn file text đầu ra"),
-    form: str = typer.Option("grid", "-f", "--format", help="Định dạng đầu ra: 'grid' hoặc 'code' (mặc định: grid)"),
+    form: str = typer.Option("grid", "-f", "--format", help="Định dạng đầu ra: 'grid', 'code' hoặc 'pxvg' (mặc định: grid)"),
     auto: bool = typer.Option(False, "--auto", help="Tự động phát hiện kích thước block"),
     block_size: int = typer.Option(1, "--block-size", help="Chỉ định kích thước block thủ công"),
     style: str = typer.Option("generic", "--style", help="Chế độ encode ('generic' hoặc 'minecraft')")
@@ -27,6 +28,8 @@ def encode(
                 grid_w, grid_h, num_colors, final_block_size = MinecraftStyle.encode(image_path, output, block_size, auto)
             else:
                 grid_w, grid_h, num_colors, final_block_size = encode_code(image_path, output, block_size, auto)
+        elif form.lower() == "pxvg":
+            grid_w, grid_h, num_colors, final_block_size = encode_pxvg(image_path, output, block_size, auto)
         else:
             grid_w, grid_h, num_colors, final_block_size = encode_image(image_path, output, block_size, auto)
         
@@ -51,7 +54,12 @@ def decode(
 ):
     """Chuyển đổi file text của PixCI ngược lại thành file ảnh."""
     try:
-        width, height = decode_text(text_path, output, scale)
+        # Tự động nhận diện định dạng dựa trên đuôi file hoặc nội dung
+        if text_path.suffix.lower() in [".pxvg", ".xml"]:
+            width, height = decode_pxvg(text_path, output, scale)
+        else:
+            width, height = decode_text(text_path, output, scale)
+            
         console.print(f"[green]Đã decode thành công sang file {output}[/green]")
         console.print(f"Kích thước lưới gốc: {width}x{height}, Kích thước ảnh xuất ra: {width*scale}x{height*scale}")
         
