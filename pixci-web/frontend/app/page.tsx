@@ -6,13 +6,13 @@ import { useEncode } from '@/lib/hooks/useEncode'
 import { FloatingInput } from '@/components/ui/FloatingInput'
 import { HistoryTimeline } from '@/components/features/HistoryTimeline'
 import { ImageUploader } from '@/components/features/ImageUploader'
+import { PixelScrambleCanvas } from '@/components/features/PixelScrambleCanvas'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
 import { PixelStar } from '@/components/ui/svgs/PixelStar'
-import { PixelSun } from '@/components/ui/svgs/PixelSun'
-import { PixelMoon } from '@/components/ui/svgs/PixelMoon'
-import { PixelCloud } from '@/components/ui/svgs/PixelCloud'
 import { PixelLogo } from '@/components/ui/svgs/PixelLogo'
+import { PixelPalette } from '@/components/ui/svgs/PixelPalette'
+import { Sun, Moon } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function Home() {
@@ -43,13 +43,6 @@ export default function Home() {
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col font-pixel relative selection:bg-[var(--accent-pink)] selection:text-white">
       
-      <motion.div animate={{ x: [0, -100, 0] }} transition={{ duration: 40, repeat: Infinity, ease: "linear" }} className="absolute top-10 left-10 opacity-50 z-0">
-        <PixelCloud className="w-32 h-auto text-white drop-shadow-[4px_4px_0_var(--text-color)]" />
-      </motion.div>
-      <motion.div animate={{ x: [0, 100, 0] }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }} className="absolute bottom-40 right-10 opacity-50 z-0">
-        <PixelCloud className="w-48 h-auto text-white drop-shadow-[4px_4px_0_var(--text-color)]" />
-      </motion.div>
-
       <header className="w-full p-4 z-50">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center gap-3 art-canvas !box-shadow-[4px_4px_0_var(--text-color)] !px-4 !py-2 rounded-full">
@@ -59,9 +52,12 @@ export default function Home() {
           
           <button 
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="art-canvas !p-3 !rounded-full hover:bg-[var(--accent-yellow)] transition-colors"
+            className="art-canvas !p-3 !rounded-full hover:bg-[var(--accent-yellow)] hover:shadow-[4px_4px_0_var(--accent-pink)] transition-all"
           >
-            {mounted && theme === 'dark' ? <PixelSun className="w-6 h-6 text-[var(--text-color)]" /> : <PixelMoon className="w-6 h-6 text-[var(--text-color)]" />}
+            {mounted && theme === 'dark' 
+              ? <Sun className="w-6 h-6 text-[var(--text-color)]" /> 
+              : <Moon className="w-6 h-6 text-[var(--text-color)]" />
+            }
           </button>
         </div>
 
@@ -84,6 +80,8 @@ export default function Home() {
               className="w-full max-w-2xl art-canvas p-4 bg-white"
             >
               <div className="p-12 border-4 border-dashed border-[var(--accent-purple)] bg-[var(--bg-color)]/30 text-center flex flex-col items-center">
+                
+                <PixelPalette className="w-24 h-24 mb-6 drop-shadow-[4px_4px_0_rgba(0,0,0,0.1)]" />
                 
                 <h1 className="text-3xl font-bold mb-4 uppercase text-[var(--accent-purple)] drop-shadow-[2px_2px_0_var(--text-color)]">
                   Tải Ảnh Lên
@@ -114,17 +112,16 @@ export default function Home() {
               <div className="art-canvas p-4 bg-[var(--panel-bg)] w-full h-full flex items-center justify-center relative z-10 overflow-hidden">
                 
                 {isProcessing && (
-                  <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden bg-[var(--panel-bg)]/20">
-                    <div className="bg-[var(--text-color)] text-[var(--accent-yellow)] px-6 py-3 font-bold uppercase tracking-widest text-sm shadow-[4px_4px_0_var(--accent-purple)] border-4 border-[var(--accent-yellow)] z-40 relative animate-pulse">
-                      Đang Chuyển Đổi...
+                  <div className="absolute top-8 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+                    <div className="bg-[var(--panel-bg)] text-[var(--text-color)] px-6 py-3 font-bold uppercase tracking-widest text-sm shadow-[4px_4px_0_var(--accent-purple)] border-4 border-[var(--text-color)]">
+                      Đang Phân Rã và Tái Tổ Hợp...
                     </div>
                   </div>
                 )}
 
-                <img
-                  src={currentNode.base64Image.startsWith('data:') ? currentNode.base64Image : `data:image/png;base64,${currentNode.base64Image}`}
-                  alt="Artwork"
-                  className={`w-full h-full object-contain pixel-rendering drop-shadow-xl ${isProcessing ? 'scrambling-img opacity-70' : ''}`}
+                <PixelScrambleCanvas 
+                  base64Image={currentNode.base64Image} 
+                  isProcessing={isProcessing} 
                 />
               </div>
             </motion.div>

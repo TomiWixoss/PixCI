@@ -42,10 +42,10 @@ export function FloatingInput({ onSubmit, isProcessing }: FloatingInputProps) {
         type="submit"
         disabled={!value.trim() || isProcessing}
         className={`
-          h-12 px-8 font-bold text-sm uppercase tracking-widest rounded-full border-4 border-[var(--text-color)] transition-transform
+          h-12 px-8 font-bold text-sm uppercase tracking-widest rounded-full border-4 border-[var(--text-color)] transition-all
           ${(!value.trim() || isProcessing) 
             ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-            : 'bg-[var(--accent-yellow)] text-[var(--text-color)] hover:-translate-y-1 active:translate-y-1 shadow-[0_4px_0_var(--text-color)]'}
+            : 'bg-[var(--accent-yellow)] text-[var(--text-color)] hover:-translate-y-1 active:translate-y-0 active:shadow-none shadow-[0_4px_0_var(--text-color)]'}
         `}
       >
         Hô Biến!

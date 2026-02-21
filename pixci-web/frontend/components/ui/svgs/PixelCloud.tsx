@@ -2,9 +2,13 @@ import { SVGProps } from "react"
 
 export function PixelCloud(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 24" fill="currentColor" {...props}>
-      <path d="M12 4h8v4h8v4h8v8H4v-4h4V8h4V4z" fill="#FFF" opacity="0.8"/>
-      <path d="M12 4h8v2h-8V4zm8 4h8v2h-8V8zM4 12h4v2H4v-2zM32 12h8v2h-8v-2zM0 16h4v4H0v-4zm36 0h4v4h-4v-4z" fill="#111" opacity="0.1"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 24" fill="none" {...props}>
+      <path d="M6 10h6v2H8v2H6v-4z" fill="currentColor" opacity="0.7"/>
+      <path d="M14 8h8v4h-6v2h-2v-6z" fill="currentColor"/>
+      <path d="M24 8h6v2h-4v2h-2v-4z" fill="currentColor" opacity="0.7"/>
+      <path d="M8 14h6v2H10v2H8v-4z" fill="currentColor" opacity="0.5"/>
+      <path d="M16 14h8v4h-6v2h-2v-6z" fill="currentColor" opacity="0.5"/>
+      <path d="M26 14h6v2h-4v2h-2v-4z" fill="currentColor" opacity="0.5"/>
     </svg>
   )
 }
