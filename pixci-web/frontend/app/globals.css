@@ -6,19 +6,19 @@
 
 @layer base {
   :root {
-    --bg-color: #F4EFFF;
+    --bg-color: #FAFAFA;
     --panel-bg: #FFFFFF;
-    --text-color: #111111;
-    --accent-purple: #8B5CF6;
-    --accent-pink: #EC4899;
-    --accent-yellow: #FBBF24;
+    --text-color: #09090B;
+    --accent-purple: #7C3AED;
+    --accent-pink: #DB2777;
+    --accent-yellow: #F59E0B;
     --pixel-border: 4px solid var(--text-color);
   }
   
   .dark {
-    --bg-color: #1A1525;
-    --panel-bg: #2D243F;
-    --text-color: #F8F7FF;
+    --bg-color: #09090B;
+    --panel-bg: #18181B;
+    --text-color: #FAFAFA;
     --accent-purple: #A78BFA;
     --accent-pink: #F472B6;
     --accent-yellow: #FCD34D;
@@ -61,6 +61,12 @@
     image-rendering: pixelated;
     image-rendering: crisp-edges;
   }
+
+  .scrambling-img {
+    animation: real-pixel-scramble 0.35s steps(3, end) infinite;
+    image-rendering: pixelated;
+    mix-blend-mode: hard-light;
+  }
 }
 
 @keyframes float {
@@ -73,33 +79,10 @@
   50% { transform: translateY(-5px); }
 }
 
-@layer utilities {
-  .pixel-scramble-overlay {
-    background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="1" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.8"/></svg>');
-    animation: pixel-scramble-anim 0.2s steps(2) infinite;
-    mix-blend-mode: difference;
-    image-rendering: pixelated;
-  }
-
-  .scrambling-img {
-    animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite both;
-    filter: saturate(200%) contrast(120%) hue-rotate(90deg);
-  }
-}
-
-@keyframes pixel-scramble-anim {
-  0% { background-position: 0 0; }
-  25% { background-position: 20px -20px; }
-  50% { background-position: -40px 40px; }
-  75% { background-position: 60px -60px; }
-  100% { background-position: 0 0; }
-}
-
-@keyframes glitch-skew {
-  0% { transform: translate(0) }
-  20% { transform: translate(-4px, 4px) }
-  40% { transform: translate(-4px, -4px) }
-  60% { transform: translate(4px, 4px) }
-  80% { transform: translate(4px, -4px) }
-  100% { transform: translate(0) }
+@keyframes real-pixel-scramble {
+  0% { filter: contrast(1) hue-rotate(0deg) blur(0px); transform: scale(1); }
+  25% { filter: contrast(5) hue-rotate(90deg) blur(2px) invert(0.2); transform: scale(1.02) translate(2px, -2px); }
+  50% { filter: contrast(10) hue-rotate(180deg) blur(4px) saturate(3); transform: scale(0.98) translate(-2px, 2px); }
+  75% { filter: contrast(5) hue-rotate(270deg) blur(2px) sepia(0.8); transform: scale(1.01) translate(2px, 2px); }
+  100% { filter: contrast(1) hue-rotate(360deg) blur(0px); transform: scale(1); }
 }

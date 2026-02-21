@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, FormEvent, useRef, useEffect } from 'react'
-import { PixelWand } from './svgs/PixelWand'
+import { PixelStar } from './svgs/PixelStar'
 
 interface FloatingInputProps {
   onSubmit: (prompt: string) => void
@@ -25,7 +25,7 @@ export function FloatingInput({ onSubmit, isProcessing }: FloatingInputProps) {
   return (
     <form onSubmit={handleSubmit} className="art-canvas flex items-center w-full bg-white p-2 rounded-full">
       <div className="flex-shrink-0 pl-4 pr-2">
-        <PixelWand className={`w-8 h-8 ${isProcessing ? 'text-[var(--text-color)] animate-spin' : 'text-[var(--accent-purple)]'}`} />
+        <PixelStar className={`w-8 h-8 ${isProcessing ? 'text-[var(--text-color)] animate-spin' : 'text-[var(--accent-purple)]'}`} />
       </div>
       
       <input
@@ -34,7 +34,7 @@ export function FloatingInput({ onSubmit, isProcessing }: FloatingInputProps) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         disabled={isProcessing}
-        placeholder={isProcessing ? "Đợi AI vung đũa phép..." : "Nhập phép thuật (VD: Vẽ thêm con mèo xanh)..."}
+        placeholder={isProcessing ? "Hệ thống đang xử lý..." : "Chuyển màu, thêm chi tiết, thay đổi nền..."}
         className="flex-1 bg-transparent border-none outline-none text-base sm:text-lg font-bold placeholder:text-[var(--text-color)]/30 disabled:opacity-50 text-[var(--text-color)] px-4"
       />
       

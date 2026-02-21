@@ -2,8 +2,10 @@
 
 import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { X } from 'lucide-react'
 import { cn, formatFileSize } from '@/lib/utils'
+import { PixelUpload } from '../ui/svgs/PixelUpload'
+import { PixelImage } from '../ui/svgs/PixelImage'
 
 interface ImageUploaderProps {
   onFileSelect: (file: File) => void
@@ -66,23 +68,23 @@ export function ImageUploader({
             isDragActive ? "bg-[var(--accent-primary)]" : "bg-[var(--bg-secondary)]"
           )}>
             {isDragActive ? (
-              <Upload className="w-8 h-8 text-white" />
+              <PixelUpload className="w-12 h-12 text-[var(--accent-pink)] drop-shadow-[2px_2px_0_var(--text-color)]" />
             ) : (
-              <ImageIcon className="w-8 h-8 text-[var(--text-secondary)]" />
+              <PixelImage className="w-16 h-16 text-[var(--text-color)] opacity-70 mb-4" />
             )}
           </div>
           
           {isDragActive ? (
             <p className="text-lg font-medium text-[var(--accent-primary)] mb-2">
-              Drop your image here
+              Thả ảnh vào đây
             </p>
           ) : (
             <>
               <p className="text-lg font-medium text-[var(--text-primary)] mb-2">
-                Drag & drop your image
+                Kéo & thả ảnh của bạn
               </p>
               <p className="text-sm text-[var(--text-secondary)] mb-4">
-                or click to browse files
+                hoặc bấm để duyệt tệp tin
               </p>
             </>
           )}

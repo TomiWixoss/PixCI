@@ -69,9 +69,9 @@ export function useAIEditor() {
       setHistory(newHistory)
       setCurrentIndex(newHistory.length - 1)
       
-      toast.success('Edit thành công!')
+      toast.success('Đã chỉnh sửa hình ảnh hoàn tất.')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'AI edit thất bại')
+      toast.error(error instanceof Error ? error.message : 'Quá trình phân tích thất bại.')
       console.error(error)
     } finally {
       setIsProcessing(false)
@@ -81,7 +81,7 @@ export function useAIEditor() {
   const rollbackTo = (index: number) => {
     if (index >= 0 && index < history.length) {
       setCurrentIndex(index)
-      toast('Đã quay về lịch sử: ' + history[index].prompt, { icon: '⏪' })
+      toast('Đã phục hồi phiên bản: ' + history[index].prompt)
     }
   }
 

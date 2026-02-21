@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAIEditor } from '@/lib/hooks/useAIEditor'
 import { useEncode } from '@/lib/hooks/useEncode'
 import { FloatingInput } from '@/components/ui/FloatingInput'
@@ -8,16 +8,20 @@ import { HistoryTimeline } from '@/components/features/HistoryTimeline'
 import { ImageUploader } from '@/components/features/ImageUploader'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
-import { PixelPalette } from '@/components/ui/svgs/PixelPalette'
-import { PixelWand } from '@/components/ui/svgs/PixelWand'
+import { PixelStar } from '@/components/ui/svgs/PixelStar'
+import { PixelSun } from '@/components/ui/svgs/PixelSun'
+import { PixelMoon } from '@/components/ui/svgs/PixelMoon'
 import { PixelCloud } from '@/components/ui/svgs/PixelCloud'
 import { PixelLogo } from '@/components/ui/svgs/PixelLogo'
 import toast from 'react-hot-toast'
 
 export default function Home() {
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const encodeMutation = useEncode()
   const { history, currentIndex, currentNode, isProcessing, submitPrompt, rollbackTo, addInitialState } = useAIEditor()
+
+  useEffect(() => setMounted(true), [])
 
   const handleInitialUpload = async (file: File) => {
     const renderPreview = new Promise<string>((resolve) => {
@@ -30,9 +34,9 @@ export default function Home() {
       const result = await encodeMutation.mutateAsync({ file, block_size: 1, auto_detect: true })
       const base64Preview = await renderPreview
       addInitialState(result.pxvg_code, base64Preview)
-      toast.success('Đã pixelate thành công!', { icon: '🎨' })
+      toast.success('Hệ thống đã nhận diện dữ liệu ảnh.')
     } catch (error) {
-      toast.error('Lỗi xử lý ảnh.')
+      toast.error('Gặp lỗi trong quá trình xử lý ảnh.')
     }
   }
 
@@ -57,7 +61,7 @@ export default function Home() {
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="art-canvas !p-3 !rounded-full hover:bg-[var(--accent-yellow)] transition-colors"
           >
-            <PixelWand className="w-6 h-6 text-[var(--text-color)]" />
+            {mounted && theme === 'dark' ? <PixelSun className="w-6 h-6 text-[var(--text-color)]" /> : <PixelMoon className="w-6 h-6 text-[var(--text-color)]" />}
           </button>
         </div>
 
@@ -81,18 +85,14 @@ export default function Home() {
             >
               <div className="p-12 border-4 border-dashed border-[var(--accent-purple)] bg-[var(--bg-color)]/30 text-center flex flex-col items-center">
                 
-                <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-                  <PixelPalette className="w-24 h-24 mb-6 drop-shadow-[4px_4px_0_rgba(0,0,0,0.1)]" />
-                </motion.div>
-                
                 <h1 className="text-3xl font-bold mb-4 uppercase text-[var(--accent-purple)] drop-shadow-[2px_2px_0_var(--text-color)]">
-                  Thả Tranh Vào Đây!
+                  Tải Ảnh Lên
                 </h1>
                 
                 {encodeMutation.isPending ? (
                   <div className="flex flex-col items-center gap-4 mt-4">
-                    <PixelWand className="w-10 h-10 animate-spin text-[var(--accent-pink)]" />
-                    <p className="text-xs uppercase font-bold text-[var(--accent-pink)] animate-pulse">Đang rắc bột màu PXVG...</p>
+                    <PixelStar className="w-10 h-10 animate-spin text-[var(--accent-pink)]" />
+                    <p className="text-xs uppercase font-bold text-[var(--accent-pink)] animate-pulse">Đang phân tích dữ liệu PXVG...</p>
                   </div>
                 ) : (
                   <div className="mt-4">
@@ -115,14 +115,8 @@ export default function Home() {
                 
                 {isProcessing && (
                   <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden bg-[var(--panel-bg)]/20">
-                    <div className="absolute inset-0 pixel-scramble-overlay opacity-60 mix-blend-color-burn"></div>
-                    <motion.div 
-                      animate={{ top: ['-10%', '110%'] }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                      className="absolute left-0 right-0 h-8 bg-[var(--accent-pink)]/30 border-y border-[var(--accent-pink)] shadow-[0_0_20px_var(--accent-pink)] z-30 mix-blend-screen"
-                    />
                     <div className="bg-[var(--text-color)] text-[var(--accent-yellow)] px-6 py-3 font-bold uppercase tracking-widest text-sm shadow-[4px_4px_0_var(--accent-purple)] border-4 border-[var(--accent-yellow)] z-40 relative animate-pulse">
-                      Đang Xáo Trộn Pixel...
+                      Đang Chuyển Đổi...
                     </div>
                   </div>
                 )}
