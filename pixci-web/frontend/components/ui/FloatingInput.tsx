@@ -1,24 +1,18 @@
 'use client'
 
 import { useState, FormEvent, useRef, useEffect } from 'react'
-import { Send, Sparkles } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-
-export function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(clsx(inputs))
-}
+import { PixelWand } from './svgs/PixelWand'
 
 interface FloatingInputProps {
   onSubmit: (prompt: string) => void
   isProcessing: boolean
-  placeholder?: string
 }
 
-export function FloatingInput({ onSubmit, isProcessing, placeholder = "Nhập lệnh cho AI (VD: Đổi nấm thành màu đỏ...)" }: FloatingInputProps) {
+export function FloatingInput({ onSubmit, isProcessing }: FloatingInputProps) {
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { inputRef.current?.focus() }, [])
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -28,47 +22,34 @@ export function FloatingInput({ onSubmit, isProcessing, placeholder = "Nhập l�
     }
   }
 
-  // Focus input on load
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
-
   return (
-    <motion.div 
-      initial={{ y: 50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-      className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50"
-    >
-      <form onSubmit={handleSubmit} className="brutal-card p-2 flex items-center gap-3 bg-white dark:bg-black w-full rounded-sm">
-        <div className="flex-shrink-0 pl-2">
-          {isProcessing ? (
-            <Sparkles className="h-6 w-6 text-[var(--color-primary)] animate-pulse" />
-          ) : (
-            <div className="w-6 h-6 bg-black dark:bg-[#00ff00] animate-pulse" style={{ clipPath: 'polygon(0 0, 100% 50%, 0 100%)' }}></div>
-          )}
-        </div>
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          disabled={isProcessing}
-          placeholder={isProcessing ? "AI Đang xử lý không gian Pixel..." : placeholder}
-          className="flex-1 bg-transparent border-none outline-none text-base sm:text-lg font-pixel placeholder:text-gray-400 dark:placeholder:text-gray-600 disabled:opacity-50"
-        />
-        <button
-          type="submit"
-          disabled={!value.trim() || isProcessing}
-          className={cn(
-            "brutal-btn p-3 px-6 flex items-center justify-center gap-2",
-            (!value.trim() || isProcessing) && "opacity-50 cursor-not-allowed"
-          )}
-        >
-          <span className="hidden sm:inline">GỬI LỆNH</span>
-          <Send className="h-5 w-5" />
-        </button>
-      </form>
-    </motion.div>
+    <form onSubmit={handleSubmit} className="art-canvas flex items-center w-full bg-white p-2 rounded-full">
+      <div className="flex-shrink-0 pl-4 pr-2">
+        <PixelWand className={`w-8 h-8 ${isProcessing ? 'text-[var(--text-color)] animate-spin' : 'text-[var(--accent-purple)]'}`} />
+      </div>
+      
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        disabled={isProcessing}
+        placeholder={isProcessing ? "Đợi AI vung đũa phép..." : "Nhập phép thuật (VD: Vẽ thêm con mèo xanh)..."}
+        className="flex-1 bg-transparent border-none outline-none text-base sm:text-lg font-bold placeholder:text-[var(--text-color)]/30 disabled:opacity-50 text-[var(--text-color)] px-4"
+      />
+      
+      <button
+        type="submit"
+        disabled={!value.trim() || isProcessing}
+        className={`
+          h-12 px-8 font-bold text-sm uppercase tracking-widest rounded-full border-4 border-[var(--text-color)] transition-transform
+          ${(!value.trim() || isProcessing) 
+            ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+            : 'bg-[var(--accent-yellow)] text-[var(--text-color)] hover:-translate-y-1 active:translate-y-1 shadow-[0_4px_0_var(--text-color)]'}
+        `}
+      >
+        Hô Biến!
+      </button>
+    </form>
   )
 }

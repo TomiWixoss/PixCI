@@ -18,6 +18,7 @@ export function ImageUploader({
     'image/png': ['.png'],
     'image/jpeg': ['.jpg', '.jpeg'],
     'image/gif': ['.gif'],
+    'image/webp': ['.webp'],
   }
 }: ImageUploaderProps) {
   const [preview, setPreview] = useState<string | null>(null)
@@ -50,62 +51,74 @@ export function ImageUploader({
   }
 
   return (
-    <div className="w-full font-pixel">
+    <div {...getRootProps()} className="w-full min-h-[400px] cursor-pointer">
+      <input {...getInputProps()} />
+      
       {!preview ? (
-        <div
-          {...getRootProps()}
-          className={cn(
-            'border-4 border-dashed p-8 md:p-12 text-center cursor-pointer transition-all bg-white dark:bg-black',
-            isDragActive 
-              ? 'border-black dark:border-[#00ff00] bg-gray-100 dark:bg-[#111] scale-105' 
-              : 'border-black dark:border-[#333] hover:border-black dark:hover:border-[#00ff00] hover:-translate-y-1',
-            fileRejections.length > 0 && 'border-red-500 bg-red-50 dark:bg-red-900/20'
-          )}
-        >
-          <input {...getInputProps()} />
-          <Upload className={cn("mx-auto h-12 w-12 mb-4", isDragActive ? "text-black dark:text-[#00ff00] animate-bounce" : "text-gray-400 dark:text-gray-600")} />
+        <div className={cn(
+          "min-h-[400px] flex flex-col items-center justify-center p-8 transition-all rounded-xl",
+          isDragActive 
+            ? "bg-[var(--accent-primary)]/10 border-2 border-[var(--accent-primary)]" 
+            : "bg-[var(--bg-elevated)] hover:bg-[var(--bg-secondary)] border-2 border-dashed border-[var(--border-subtle)]"
+        )}>
+          <div className={cn(
+            "w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all",
+            isDragActive ? "bg-[var(--accent-primary)]" : "bg-[var(--bg-secondary)]"
+          )}>
+            {isDragActive ? (
+              <Upload className="w-8 h-8 text-white" />
+            ) : (
+              <ImageIcon className="w-8 h-8 text-[var(--text-secondary)]" />
+            )}
+          </div>
+          
           {isDragActive ? (
-            <p className="font-bold text-black dark:text-[#00ff00] text-sm uppercase">THẢ ẢNH VÀO ĐÂY...</p>
+            <p className="text-lg font-medium text-[var(--accent-primary)] mb-2">
+              Drop your image here
+            </p>
           ) : (
             <>
-              <p className="text-black dark:text-gray-300 text-sm mb-3 uppercase leading-relaxed">
-                KÉO THẢ HOẶC CLICK ĐỂ <br/> CHỌN ẢNH GỐC
+              <p className="text-lg font-medium text-[var(--text-primary)] mb-2">
+                Drag & drop your image
               </p>
-              <p className="text-[10px] text-gray-500">
-                PNG, JPG, GIF (MAX {formatFileSize(maxSize)})
+              <p className="text-sm text-[var(--text-secondary)] mb-4">
+                or click to browse files
               </p>
             </>
           )}
+          
+          <p className="text-xs text-[var(--text-muted)]">
+            PNG, JPG, GIF, WebP • Max {formatFileSize(maxSize)}
+          </p>
+          
           {fileRejections.length > 0 && (
-            <p className="text-red-600 text-[10px] mt-4 uppercase font-bold glitch">
-              {fileRejections[0].errors[0].message === "file-too-large" ? "FILE QUÁ LỚN!" : "FILE KHÔNG HỢP LỆ!"}
+            <p className="text-red-500 text-sm mt-4">
+              {fileRejections[0].errors[0].message === "file-too-large" ? "File too large" : "Invalid file type"}
             </p>
           )}
         </div>
       ) : (
-        <div className="relative brutal-card p-4 sm:p-6 bg-white dark:bg-black group">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-            <div className="flex-shrink-0 w-32 h-32 brutal-card overflow-hidden bg-gray-100 p-1">
+        <div className="relative min-h-[400px] flex items-center justify-center p-8 bg-[var(--bg-elevated)] rounded-xl">
+          <div className="relative">
+            <div className="w-64 h-64 rounded-xl overflow-hidden border-2 border-[var(--border-subtle)]">
               <img
                 src={preview}
                 alt="Preview"
                 className="w-full h-full object-cover pixel-rendering"
               />
             </div>
-            <div className="flex-1 min-w-0 text-center sm:text-left flex flex-col justify-center h-32">
-              <p className="font-bold text-sm text-black dark:text-[#00ff00] truncate uppercase mb-2">
-                {selectedFile?.name}
-              </p>
-              <p className="text-[10px] text-gray-500 mb-4">
-                {selectedFile && formatFileSize(selectedFile.size)}
-              </p>
-              <button
-                onClick={clearFile}
-                className="brutal-btn px-4 py-2 text-[10px] flex items-center justify-center gap-2 self-center sm:self-start bg-red-500 text-white shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_rgba(255,0,0,0.5)]"
-              >
-                <X className="h-3 w-3" /> HỦY BỎ
-              </button>
-            </div>
+            
+            <button
+              onClick={clearFile}
+              className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center hover:scale-110 transition-transform"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
+            <p className="text-sm text-[var(--text-secondary)]">{selectedFile?.name}</p>
+            <p className="text-xs text-[var(--text-muted)] text-center">{selectedFile && formatFileSize(selectedFile.size)}</p>
           </div>
         </div>
       )}
