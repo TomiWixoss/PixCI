@@ -73,6 +73,22 @@ const aioClient = new AIO({
       ],
       priority: 10,
     },
+    {
+      provider: 'nvidia',
+      apiKeys: [
+        {
+          key: process.env.NVIDIA_API_KEY || '',
+          priority: 100,
+        },
+      ],
+      models: [
+        {
+          modelId: 'z-ai/glm4.7',
+          priority: 100,
+        },
+      ],
+      priority: 100,
+    },
   ],
   maxRetries: 3,
   retryDelay: 1000,
@@ -174,8 +190,8 @@ Return ONLY the complete PXVG XML code, no explanations. Include multiple <pxvg>
     }
 
     const response = await aioClient.chatCompletion({
-      provider: 'google-ai',
-      model: 'gemini-3-flash-preview',
+      provider: 'nvidia',
+      model: 'z-ai/glm4.7',
       systemPrompt,
       messages,
       temperature: 1.0,
