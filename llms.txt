@@ -56,9 +56,51 @@ Giúp định nghĩa nhanh các cấu trúc dạng hữu cơ mà không cần nh
   *Thuộc tính:* `cx`, `cy` (Tâm), `rx`, `ry` (Bán kính bầu dục), `noise` (Độ méo nhiễu, Vd: 0.2), `c` (mã màu).
 
 ## Hậu Kỳ (Post-processing)
-Áp dụng lên toàn bộ Canvas sau khi tất cả các layer đã được rải điểm. Bắt buộc đặt bên trong container `<postprocess>` ở **cuối file**.
+Áp dụng lên toàn bộ Canvas sau khi tất cả các layer đã được rải điểm. Bắt buộc đặt bên trong container `<postprocess>` ở **cuối file**. Đối với animation, hậu kỳ sẽ được áp dụng riêng biệt lên *từng frame* trước khi ghép lại thành Spritesheet.
 - **`<outline>`**: Viền tự động.
   *Thuộc tính:* `sel-out` (True/False - nếu `true`, lấy màu vật thể làm viền rồi tô đậm đi và đổi tone màu), `thickness` (Độ dày), `color` (Nếu `sel-out="false"`, dùng màu gán sẵn, Vd: "#000000FF").
 - **`<shadow>`** (hoặc `<directional-shadow>`): Đổ bóng ánh sáng toàn cục lên khối 2D.
   *Thuộc tính:* `dir` (Định hướng sáng: `top_left`, `top_right`...), `intensity` (Cường độ bóng 0.0 - 1.0).
 - **`<jaggies>`** (hoặc `<jaggies-cleanup>`): Tự diệt các góc vuông bị cấn hạt hoặc đường răng cưa lỗi trên bản vẽ. Không có thuộc tính.
+
+## Animation & Rigging (Hoạt Ảnh và Lắp Ráp)
+PXVG hỗ trợ việc tái sử dụng linh kiện đồ họa thông qua cơ chế Bone & Rigging `<defs>` - `<use>`, giúp tiết kiệm token đáng kể và giữ vững tính liên tục (consistency) của nhân vật khi tạo Spritesheet. 
+
+- **`<defs>`**: Đặt khối này ở phần đầu, là nơi khai báo (định nghĩa) các bộ phận. Nội dung trong `<defs>` **không được hiển thị ngay**.
+- **`<group>`**: Gom một tập hợp các thẻ vẽ vật thể rời (VD: Cái đầu, Cánh tay). 
+  *Thuộc tính:* `id` (Tên định danh, VD: "head"). 
+- **`<animation>`**: Đánh dấu PXVG sẽ render ra một ảnh Spritesheet liên hoàn thay vì 1 ảnh tĩnh duy nhất.
+  *Thuộc tính:* `name` (Tên hoạt ảnh, Vd: "walk_cycle"), `columns` (Số cột trong lưới xuất ra, mặc định bằng tổng số frame).
+- **`<frame>`**: Định nghĩa một khung hình bên trong `<animation>`.
+  *Thuộc tính:* `id` (Số thứ tự hoặc tên).
+- **`<use>`**: Kéo thả khối `<group>` đã định nghĩa vào trong frame hoặc layer, hỗ trợ đẩy tọa độ hoặc lật chiều.
+  *Thuộc tính:* `ref` (Gắn với `id` của `<group>`), `x` (đẩy trục ngang), `y` (đẩy trục dọc), `flip-x` ("true" / "false" - Khấu trừ phép lật trái phải).
+
+**Ví dụ một Hoạt Ảnh Slime nảy:**
+```xml
+<pxvg w="32" h="32" xmlns="http://pixci.dev/pxvg">
+  <palette>
+    <color k="01" hex="#1A1C2CFF" />
+    <color k="09" hex="#6ABE30FF" />
+  </palette>
+  
+  <defs>
+    <group id="slime_body"><dome cx="16" y="28" w="20" h="12" c="09" /></group>
+    <group id="slime_eyes"><rect x="12" y="20" w="2" h="3" c="01" /></group>
+  </defs>
+
+  <animation name="bounce" columns="2">
+    <!-- Frame 1: Đứng yên -->
+    <frame id="1">
+      <use ref="slime_body" />
+      <use ref="slime_eyes" />
+    </frame>
+    <!-- Frame 2: Nảy lên (cả body và mắt dịch lên y="-4") -->
+    <frame id="2">
+      <use ref="slime_body" x="0" y="-4" />
+      <use ref="slime_eyes" x="0" y="-4" />
+    </frame>
+  </animation>
+  <postprocess><outline sel-out="false" color="#1A1C2CFF" thickness="1" /></postprocess>
+</pxvg>
+```
