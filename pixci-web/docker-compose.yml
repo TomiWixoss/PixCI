@@ -20,12 +20,6 @@ services:
       - ./backend/temp:/app/temp
       # Mount pixci source code
       - ../pixci:/app/pixci
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import requests; requests.get('http://localhost:8000/api/v1/health')\" || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     networks:
       - pixci-network
 
@@ -40,8 +34,7 @@ services:
       - NEXT_PUBLIC_APP_NAME=PixCI Web
       - NEXT_PUBLIC_APP_VERSION=1.0.0
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
       - pixci-network
 
