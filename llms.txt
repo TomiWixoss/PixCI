@@ -2,7 +2,7 @@
 > PXVG là một ngôn ngữ đánh dấu (Markup Language) dựa trên XML, được thiết kế đặc biệt làm mã trung gian (Static IR) để định nghĩa và sinh hình ảnh Pixel Art. PXVG cho phép định nghĩa các khối, đường nét, điểm ảnh lẻ và các hình học ngữ nghĩa một cách ngắn gọn, tối ưu hóa kích thước chuỗi (Token) và đảm bảo an toàn tuyệt đối khi parse.
 
 ## Cấu trúc gốc
-Mọi file PXVG phải được bao bọc trong thẻ `<pxvg>` với các thuộc tính kích thước Canvas.
+Mọi file PXVG (lưu với đuôi `.pxvg.xml`) phải được bao bọc trong thẻ `<pxvg>` với các thuộc tính kích thước Canvas.
 ```xml
 <pxvg w="32" h="32" xmlns="http://pixci.dev/pxvg">
   <!-- Nội dung bản vẽ -->
