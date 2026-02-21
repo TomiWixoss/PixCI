@@ -1,0 +1,78 @@
+# PXVG (Pixel Vector Graphics)
+
+> Ngôn ngữ XML để mô tả pixel art. Tọa độ phải là số nguyên.
+
+## Cấu trúc
+
+```xml
+<pxvg w="32" h="32" xmlns="http://pixci.dev/pxvg">
+  <palette>
+    <color k="A" hex="#1C1C1EFF" />
+  </palette>
+  <layer id="main">
+    <!-- Các thẻ vẽ -->
+  </layer>
+  <postprocess>
+    <!-- Hiệu ứng cuối -->
+  </postprocess>
+</pxvg>
+```
+
+## Palette
+
+- `<palette load="endesga-32" />` - Load palette có sẵn
+- `<color k="A" hex="#FF0000FF" />` - Định nghĩa màu (key 1 ký tự)
+
+## Thẻ vẽ cơ bản
+
+- `<row y="5" x1="10" x2="20" c="A" />` - Dòng ngang (tiết kiệm token nhất)
+- `<dots c="A" pts="5,3 6,3 7,4" />` - Nhiều pixel rời
+- `<rect x="5" y="5" w="10" h="10" c="A" />` - Hình chữ nhật
+- `<circle cx="16" cy="16" r="8" fill="true" c="A" />` - Hình tròn
+- `<ellipse cx="16" cy="16" rx="10" ry="6" fill="true" c="A" />` - Hình elip
+- `<line x1="0" y1="0" x2="10" y2="10" c="A" />` - Đường thẳng
+- `<polygon pts="10,10 20,20 10,20" c="A" />` - Đa giác
+
+## Thẻ nâng cao
+
+- `<dome cx="16" y="20" w="10" h="5" c="A" />` - Hình vòm
+- `<taper cx="16" y1="10" y2="20" w1="4" w2="8" c="A" />` - Hình thuôn
+- `<dither x="5" y="5" w="10" h="10" c="A" c2="B" pattern="checkered" />` - Trộn màu
+- `<gradient x="5" y="5" w="10" h="10" mode="vertical" palette="A,B,C" />` - Chuyển màu
+
+## Transform (trong layer)
+
+- `<flip-x />`, `<flip-y />` - Lật ảnh
+- `<mirror-x />`, `<mirror-y />` - Phản chiếu đối xứng
+- `<alpha-lock v="true" />` - Khóa alpha (chỉ vẽ vào vùng có màu)
+- `<translate dx="5" dy="10" />` - Dịch chuyển
+
+## Post-processing (cuối file)
+
+```xml
+<postprocess>
+  <outline sel-out="true" thickness="1" />
+  <shadow dir="top_left" intensity="0.3" />
+  <jaggies />
+</postprocess>
+```
+
+- `<outline>` - Viền tự động (sel-out="true" lấy màu vật thể)
+- `<shadow>` - Bóng đổ (dir: top_left, top_right, bottom_left, bottom_right)
+- `<jaggies>` - Khử răng cưa
+
+## Xóa pixel
+
+Dùng `c="CLEAR"` trong bất kỳ thẻ nào để tẩy pixel.
+
+## Animation
+
+```xml
+<defs>
+  <group id="body"><rect x="10" y="10" w="12" h="8" c="A" /></group>
+</defs>
+<animation name="idle" columns="2">
+  <frame id="1"><use ref="body" /></frame>
+  <frame id="2"><use ref="body" y="1" /></frame>
+</animation>
+```
