@@ -26,6 +26,13 @@ def _parse_drawing_tags(canvas: Canvas, parent_element: ET.Element, strip_ns):
             x1 = int(attr.get('x1', attr.get('start-x', 0)))
             x2 = int(attr.get('x2', attr.get('end-x', 0)))
             canvas.draw_rows([(y, x1, x2, c)])
+        elif stag == 'column':
+            x = int(attr.get('x', 0))
+            y1 = int(attr.get('y1', attr.get('start-y', 0)))
+            y2 = int(attr.get('y2', attr.get('end-y', 0)))
+            # Vẽ column bằng cách vẽ từng pixel dọc
+            for y in range(y1, y2 + 1):
+                canvas.set_pixel((x, y), c)
         elif stag == 'circle':
             cx = int(attr.get('cx', 0))
             cy = int(attr.get('cy', 0))
@@ -388,51 +395,9 @@ def decode_pxvg(text_path: Path, output_path: Path, scale: int = 1) -> Tuple[int
 
 
 def encode_pxvg(image_path: Path, output_path: Path, block_size: int = 1, auto_detect: bool = True) -> Tuple[int, int, int, int]:
-    """Encode an image to an ultra-compact PXVG XML format."""
-    image_path = Path(image_path)
-    output_path = Path(output_path)
-    img = Image.open(image_path).convert("RGBA")
-    
-    if auto_detect:
-        block_size = _detect_block_size(img)
-        
-    gw, gh, grid, palette = _build_grid(img, block_size)
-    
-    rects, used = _find_best_rects(grid, gw, gh)
-    runs = _collect_all_runs(grid, gw, gh, used)
-    
-    single_pixels = [(y, xs, c) for y, xs, xe, c in runs if xs == xe]
-    multi_runs = [(y, xs, xe, c) for y, xs, xe, c in runs if xs != xe]
-    
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write('<?xml version="1.0" encoding="utf-8"?>\n')
-        f.write(f'<pxvg w="{gw}" h="{gh}" xmlns="http://pixci.dev/pxvg">\n')
-        
-        f.write('  <palette>\n')
-        pal_items = sorted(palette.items(), key=lambda x: x[1])
-        for hx, key in pal_items:
-            f.write(f'    <color k="{key}" hex="{hx}" />\n')
-        f.write('  </palette>\n')
-        
-        f.write('  <layer id="main">\n')
-        
-        for x0, y0, x1, y1, color in rects:
-            w = x1 - x0 + 1
-            h = y1 - y0 + 1
-            f.write(f'    <rect x="{x0}" y="{y0}" w="{w}" h="{h}" c="{color}" />\n')
-            
-        for y, xs, xe, color in multi_runs:
-            f.write(f'    <row y="{y}" x1="{xs}" x2="{xe}" c="{color}" />\n')
-            
-        dots_by_color = {}
-        for y, x, color in single_pixels:
-            dots_by_color.setdefault(color, []).append(f"{x},{y}")
-            
-        for color, pts in sorted(dots_by_color.items()):
-            pts_str = " ".join(pts)
-            f.write(f'    <dots c="{color}" pts="{pts_str}" />\n')
-            
-        f.write('  </layer>\n')
-        f.write('</pxvg>\n')
-        
-    return (gw, gh, len(palette), block_size)
+    """
+    Ultra-optimized PXVG encoder - Kết hợp tất cả kỹ thuật tốt nhất.
+    Đảm bảo 100% pixel-perfect với số thẻ tối thiểu.
+    """
+    from .smart_encoder import smart_encode_pxvg
+    return smart_encode_pxvg(image_path, output_path, block_size, auto_detect)
