@@ -11,6 +11,7 @@ import { useTheme } from 'next-themes'
 import { PixelPalette } from '@/components/ui/svgs/PixelPalette'
 import { PixelWand } from '@/components/ui/svgs/PixelWand'
 import { PixelCloud } from '@/components/ui/svgs/PixelCloud'
+import { PixelLogo } from '@/components/ui/svgs/PixelLogo'
 import toast from 'react-hot-toast'
 
 export default function Home() {
@@ -47,9 +48,9 @@ export default function Home() {
 
       <header className="w-full p-4 z-50">
         <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center gap-4 art-canvas !box-shadow-[4px_4px_0_var(--text-color)] !p-3 rounded-full">
-            <div className="w-6 h-6 bg-[var(--accent-yellow)] border-2 border-[var(--text-color)] rounded-full animate-bounce"></div>
-            <span className="font-bold text-sm tracking-widest uppercase">PixCI Art Studio</span>
+          <div className="flex items-center gap-3 art-canvas !box-shadow-[4px_4px_0_var(--text-color)] !px-4 !py-2 rounded-full">
+            <PixelLogo className="w-8 h-8" />
+            <span className="font-bold text-sm tracking-widest uppercase mt-0.5">PixCI Studio</span>
           </div>
           
           <button 
@@ -110,24 +111,26 @@ export default function Home() {
             >
               <div className="absolute -bottom-4 w-[110%] h-8 bg-[var(--accent-yellow)] border-4 border-[var(--text-color)] z-0 rounded-full"></div>
               
-              <div className="art-canvas p-4 bg-white w-full h-full flex items-center justify-center relative z-10">
+              <div className="art-canvas p-4 bg-[var(--panel-bg)] w-full h-full flex items-center justify-center relative z-10 overflow-hidden">
                 
                 {isProcessing && (
-                  <motion.div 
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    className="absolute inset-0 z-30 bg-white/60 backdrop-blur-sm flex flex-col items-center justify-center"
-                  >
-                    <PixelWand className="w-20 h-20 text-[var(--accent-purple)] mb-4" />
-                    <div className="bg-[var(--text-color)] text-white px-6 py-3 font-bold uppercase tracking-widest text-sm shadow-[4px_4px_0_var(--accent-pink)] rounded-full">
-                      AI Đang Vẽ...
+                  <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden bg-[var(--panel-bg)]/20">
+                    <div className="absolute inset-0 pixel-scramble-overlay opacity-60 mix-blend-color-burn"></div>
+                    <motion.div 
+                      animate={{ top: ['-10%', '110%'] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                      className="absolute left-0 right-0 h-8 bg-[var(--accent-pink)]/30 border-y border-[var(--accent-pink)] shadow-[0_0_20px_var(--accent-pink)] z-30 mix-blend-screen"
+                    />
+                    <div className="bg-[var(--text-color)] text-[var(--accent-yellow)] px-6 py-3 font-bold uppercase tracking-widest text-sm shadow-[4px_4px_0_var(--accent-purple)] border-4 border-[var(--accent-yellow)] z-40 relative animate-pulse">
+                      Đang Xáo Trộn Pixel...
                     </div>
-                  </motion.div>
+                  </div>
                 )}
 
                 <img
                   src={currentNode.base64Image.startsWith('data:') ? currentNode.base64Image : `data:image/png;base64,${currentNode.base64Image}`}
                   alt="Artwork"
-                  className="w-full h-full object-contain pixel-rendering drop-shadow-xl"
+                  className={`w-full h-full object-contain pixel-rendering drop-shadow-xl ${isProcessing ? 'scrambling-img opacity-70' : ''}`}
                 />
               </div>
             </motion.div>
