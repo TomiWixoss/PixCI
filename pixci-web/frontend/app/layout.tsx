@@ -14,6 +14,11 @@ const pixelFont = Space_Mono({
 export const metadata: Metadata = {
   title: "PixCI - AI Pixel Studio",
   description: "Trình chỉnh sửa Pixel Art bằng AI chuẩn Awwwards",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
 };
 
 export default function RootLayout({
