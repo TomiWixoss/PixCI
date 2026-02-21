@@ -1,4 +1,5 @@
 from .core.canvas import Canvas
+from .core.animation import Animation
 from .core.grid_engine import encode_image, decode_text, init_canvas
 from .core.code_engine import encode_code
 from .core.pxvg_engine import encode_pxvg, decode_pxvg
@@ -7,6 +8,7 @@ from .core.mixins.color import _OFFLINE_PALETTES as BUILTIN_PALETTES
 
 __all__ = [
     "Canvas",
+    "Animation",
     "encode_image",
     "encode_code",
     "encode_pxvg",

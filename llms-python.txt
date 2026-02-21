@@ -70,3 +70,31 @@ Thực hiện ở QUÁ TRÌNH CUỐI sau khi đã vẽ xong và gom layers.
   `canvas.cleanup_jaggies()`
 - **Làm sáng viền ngược sáng (Highlight):**
   `canvas.add_highlight_edge(light_dir="top_left", intensity=0.2)`
+
+## 9. Hệ thống Animation (Ảnh động)
+Bạn có thể cấu trúc các frames và liên kết chúng thành spritesheet/gif bằng class `Animation`.
+```python
+import pixci
+anim = pixci.Animation(32, 32, columns=4, fps=5)
+
+# Cấu hình palette (dùng chung cho mọi frame)
+anim.add_palette({"09": "#6ABE30FF", "10": "#37946EFF"})
+# hoặc anim.load_palette("pico-8")
+
+# Tạo một Canvas component (để tái sử dụng)
+body = pixci.Canvas(32, 32)
+body.draw_dome(16, 28, 20, 12, "09")
+
+# Frame 1
+f1 = anim.add_frame()
+f1.paste(body, (0, 0)) # Vẽ body ở vị trí gốc
+f1.add_outline(thickness=1, sel_out=False) # Post-process trên từng frame
+
+# Frame 2
+f2 = anim.add_frame()
+f2.paste(body, (0, -4)) # Di chuyển body lên trên 4 pixels (nảy lên)
+f2.add_outline(thickness=1, sel_out=False)
+
+# Render thành .png (Spritesheet tự tính theo columns) và .gif
+anim.save("slime_jump.png", scale=10)
+```

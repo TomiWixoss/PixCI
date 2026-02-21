@@ -110,6 +110,17 @@ class TransformMixin(BaseCanvas):
                         continue
                     self.grid[x][y] = pixel
 
+    def paste(self, canvas: 'BaseCanvas', position: Tuple[int, int] = (0, 0)):
+        """Paste another Canvas into this Canvas at the given position.
+        
+        Example:
+            body = Canvas(32, 32)
+            # ... draw body ...
+            frame.paste(body, (0, -4))
+        """
+        data = canvas.copy_region((0, 0), (canvas.width - 1, canvas.height - 1))
+        self.paste_region(data, position, skip_transparent=True)
+
     def stamp(self, top_left: Tuple[int, int], bottom_right: Tuple[int, int], target: Tuple[int, int]):
         """Copy a region and paste it at target. Shortcut for copy_region + paste_region.
         
