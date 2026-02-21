@@ -54,16 +54,16 @@ Dùng c="CLEAR" trong bất kỳ thẻ nào để tẩy pixel.
 const aioClient = new AIO({
   providers: [
     {
-      provider: 'nvidia',
+      provider: 'google-ai',
       apiKeys: [
         {
-          key: process.env.NVIDIA_API_KEY || '',
+          key: process.env.GOOGLE_API_KEY || '',
           priority: 10,
         },
       ],
       models: [
         {
-          modelId: 'stepfun-ai/step-3.5-flash',
+          modelId: 'gemini-3-flash-preview',
           priority: 10,
         },
       ],
@@ -91,9 +91,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!process.env.NVIDIA_API_KEY) {
+    if (!process.env.GOOGLE_API_KEY) {
       return NextResponse.json(
-        { error: 'NVIDIA_API_KEY not configured' },
+        { error: 'GOOGLE_API_KEY not configured' },
         { status: 500 }
       )
     }
@@ -157,12 +157,12 @@ Return ONLY the edited PXVG code (no explanations):`,
     }
 
     const response = await aioClient.chatCompletion({
-      provider: 'nvidia',
-      model: 'stepfun-ai/step-3.5-flash',
+      provider: 'google-ai',
+      model: 'gemini-3-flash-preview',
       systemPrompt,
       messages,
-      temperature: 0.3,
-      max_tokens: 4000,
+      temperature: 0.7,
+      max_tokens: 65536,
     })
 
     const content = response.choices[0].message.content
