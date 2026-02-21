@@ -102,7 +102,7 @@ interface Message {
 
 export async function POST(request: NextRequest) {
   try {
-    const { newPxvgCodes, userPrompt, conversationHistory } = await request.json()
+    const { inputPxvgCodes, userPrompt, conversationHistory } = await request.json()
 
     if (!userPrompt) {
       return NextResponse.json(
@@ -128,6 +128,8 @@ export async function POST(request: NextRequest) {
 - Modify any drawing elements (<row>, <dots>, <rect>, etc.)
 - Change dimensions (w, h)
 - Add or remove shapes
+
+✨ FUSION/REFERENCE EXCEPTION: If the user provides multiple images and asks to fuse, combine, or use them as references, you MAY merge elements and colors from the provided images into ONE single final image.
 
 ✅ WHAT YOU DO:
 When user says "make it blue" or "darker" or "warmer":
@@ -155,7 +157,12 @@ Keep all <row>, <dots>, <rect> exactly the same!
 
 ${PXVG_SYSTEM_CONTEXT}
 
-Return ONLY the complete PXVG XML code, no explanations. Include multiple <pxvg> blocks if multiple images are provided.`
+CONVERSATION MODE:
+- First message: You'll receive the original PXVG code
+- Follow-up edits: Use conversation history
+- Always preserve xmlns="http://pixci.dev/pxvg"
+- ALWAYS return EXACTLY ONE <pxvg> block as the final output, even if you receive multiple input images.
+- Return ONLY valid PXVG XML code, no explanations`
 
     // Build messages array
     const messages: Message[] = []
@@ -165,8 +172,8 @@ Return ONLY the complete PXVG XML code, no explanations. Include multiple <pxvg>
       messages.push(...conversationHistory)
       
       let promptStr = `Continue editing: ${userPrompt}\n`;
-      if (newPxvgCodes && newPxvgCodes.length > 0) {
-         promptStr += `\nNEW IMAGES ADDED:\n${newPxvgCodes.map((c: string, i: number) => `--- NEW IMAGE ${i+1} ---\n${c}`).join('\n')}\n`;
+      if (inputPxvgCodes && inputPxvgCodes.length > 0) {
+         promptStr += `\nNEW IMAGES ADDED:\n${inputPxvgCodes.map((c: string, i: number) => `--- NEW IMAGE ${i+1} ---\n${c}`).join('\n')}\n`;
       }
       promptStr += `\nReturn ALL the PXVG codes (both old and new) with your edits applied. Separate multiple <pxvg> blocks with newlines:`
       
@@ -177,15 +184,15 @@ Return ONLY the complete PXVG XML code, no explanations. Include multiple <pxvg>
       })
     } else {
       // First message - include the original PXVG code
-      if (!newPxvgCodes || newPxvgCodes.length === 0) {
+      if (!inputPxvgCodes || inputPxvgCodes.length === 0) {
         return NextResponse.json(
-          { error: 'Missing newPxvgCodes for first edit' },
+          { error: 'Missing inputPxvgCodes for first edit' },
           { status: 400 }
         )
       }
       messages.push({
         role: 'user',
-        content: `USER INSTRUCTION: ${userPrompt}\n\nCURRENT PXVG CODES:\n${newPxvgCodes.map((c: string, i: number) => `--- IMAGE ${i+1} ---\n${c}`).join('\n')}\n\nReturn ALL edited PXVG codes (no explanations, separate multiple <pxvg> blocks with newlines):`,
+        content: `USER INSTRUCTION: ${userPrompt}\n\nCURRENT PXVG CODES:\n${inputPxvgCodes.map((c: string, i: number) => `--- IMAGE ${i+1} ---\n${c}`).join('\n')}\n\nReturn ALL edited PXVG codes (no explanations, separate multiple <pxvg> blocks with newlines):`,
       })
     }
 
@@ -201,21 +208,21 @@ Return ONLY the complete PXVG XML code, no explanations. Include multiple <pxvg>
     const content = response.choices[0].message.content
     const contentStr = typeof content === 'string' ? content : JSON.stringify(content)
 
-    // Extract PXVG code from response
-    const pxvgMatches = contentStr.match(/<pxvg[\s\S]*?<\/pxvg>/gi)
-    const editedPxvgCodes = pxvgMatches ? Array.from(pxvgMatches) : [contentStr]
+    // Extract PXVG code from response - always get the FIRST/ONLY one for fusion result
+    const pxvgMatch = contentStr.match(/<pxvg[\s\S]*?<\/pxvg>/i)
+    const editedPxvg = pxvgMatch ? pxvgMatch[0] : contentStr
 
     // Build updated conversation history
     const updatedHistory = [
       ...messages,
       {
         role: 'assistant' as const,
-        content: contentStr,
+        content: editedPxvg,
       },
     ]
 
     return NextResponse.json({
-      editedPxvgCodes,
+      editedPxvg,
       explanation: 'AI edited your pixel art based on your instruction',
       usage: response.usage,
       conversationHistory: updatedHistory,

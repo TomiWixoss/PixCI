@@ -13,7 +13,7 @@ export interface HistoryNode {
   prompt: string
   pxvgCodes: string[]
   base64Images: string[]
-  unsubmittedPxvgCodes: string[]
+  unsubmittedReferences: string[]
   conversationHistory: Message[]
 }
 
@@ -30,7 +30,7 @@ export function useAIEditor() {
       prompt: 'Ảnh Gốc',
       pxvgCodes,
       base64Images,
-      unsubmittedPxvgCodes: pxvgCodes,
+      unsubmittedReferences: pxvgCodes,
       conversationHistory: []
     }
     setHistory([rootNode])
@@ -45,7 +45,24 @@ export function useAIEditor() {
       const current = { ...newHist[currentIndex] }
       current.pxvgCodes = [...current.pxvgCodes, ...newPxvgCodes]
       current.base64Images = [...current.base64Images, ...newBase64Images]
-      current.unsubmittedPxvgCodes = [...(current.unsubmittedPxvgCodes || []), ...newPxvgCodes]
+      current.unsubmittedReferences = [...(current.unsubmittedReferences || []), ...newPxvgCodes]
+      
+      newHist[currentIndex] = current
+      return newHist
+    })
+  }, [currentIndex])
+
+  const removeImageFromCurrent = useCallback((indexToRemove: number) => {
+    setHistory(prev => {
+      const newHist = [...prev]
+      if (!newHist[currentIndex]) return prev
+      
+      const current = { ...newHist[currentIndex] }
+      const pxvgToRemove = current.pxvgCodes[indexToRemove]
+      
+      current.pxvgCodes = current.pxvgCodes.filter((_, i) => i !== indexToRemove)
+      current.base64Images = current.base64Images.filter((_, i) => i !== indexToRemove)
+      current.unsubmittedReferences = current.unsubmittedReferences.filter(code => code !== pxvgToRemove)
       
       newHist[currentIndex] = current
       return newHist
@@ -63,25 +80,22 @@ export function useAIEditor() {
       const isFirstEdit = currentIndex === 0
       
       const result = await editPixelArtWithAI({
-        newPxvgCodes: isFirstEdit ? currentNode.pxvgCodes : (currentNode.unsubmittedPxvgCodes || []),
+        inputPxvgCodes: currentNode.unsubmittedReferences,
         userPrompt: prompt,
         conversationHistory: isFirstEdit ? undefined : currentNode.conversationHistory,
       })
 
-      const decodedPromises = result.editedPxvgCodes.map(code => 
-        decodeService.decodePxvg({
-          pxvg_code: code,
-          scale: 10,
-        })
-      )
-      const decodeds = await Promise.all(decodedPromises)
+      const decoded = await decodeService.decodePxvg({
+        pxvg_code: result.editedPxvg,
+        scale: 10,
+      })
 
       const newNode: HistoryNode = {
         id: `edit-${Date.now()}`,
         prompt,
-        pxvgCodes: result.editedPxvgCodes,
-        base64Images: decodeds.map(d => d.image_base64),
-        unsubmittedPxvgCodes: [],
+        pxvgCodes: [result.editedPxvg],
+        base64Images: [decoded.image_base64],
+        unsubmittedReferences: [],
         conversationHistory: result.conversationHistory
       }
 
@@ -118,6 +132,7 @@ export function useAIEditor() {
     isProcessing,
     addInitialState,
     appendImagesToCurrent,
+    removeImageFromCurrent,
     submitPrompt,
     rollbackTo,
     reset

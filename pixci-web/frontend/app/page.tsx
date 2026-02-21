@@ -13,14 +13,14 @@ import { useTheme } from 'next-themes'
 import { PixelStar } from '@/components/ui/svgs/PixelStar'
 import { PixelLogo } from '@/components/ui/svgs/PixelLogo'
 import { PixelPalette } from '@/components/ui/svgs/PixelPalette'
-import { Sun, Moon, Download, Trash2, PlusCircle } from 'lucide-react'
+import { Sun, Moon, Download, Trash2, PlusCircle, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function Home() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const encodeMutation = useEncode()
-  const { history, currentIndex, currentNode, isProcessing, submitPrompt, rollbackTo, addInitialState, appendImagesToCurrent, reset } = useAIEditor()
+  const { history, currentIndex, currentNode, isProcessing, submitPrompt, rollbackTo, addInitialState, appendImagesToCurrent, removeImageFromCurrent, reset } = useAIEditor()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => setMounted(true), [])
@@ -198,6 +198,20 @@ export default function Home() {
                 <div className={`w-full h-full flex items-center justify-center gap-4 ${currentNode.base64Images.length > 1 ? 'flex-wrap overflow-y-auto content-center p-2' : ''}`}>
                   {currentNode.base64Images.map((img, idx) => (
                     <div key={idx} className={`relative flex items-center justify-center ${currentNode.base64Images.length > 1 ? 'w-[45%] md:w-[30%] aspect-square' : 'w-full h-full'}`}>
+                      {currentNode.base64Images.length > 1 && (
+                        <div className="absolute top-2 left-2 z-20 bg-[var(--text-color)] text-[var(--panel-bg)] text-xs px-2 py-1 font-bold">
+                          {idx === 0 ? 'GỐC' : `REF ${idx}`}
+                        </div>
+                      )}
+                      {currentNode.base64Images.length > 1 && !isProcessing && (
+                        <button
+                          onClick={() => removeImageFromCurrent(idx)}
+                          className="absolute top-1 right-1 z-30 bg-[var(--accent-pink)] text-white p-1 rounded-full border border-[var(--text-color)] hover:scale-110 transition-transform"
+                          title="Xóa ảnh này"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
                       <PixelScrambleCanvas 
                         base64Image={img} 
                         isProcessing={isProcessing} 
