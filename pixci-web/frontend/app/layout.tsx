@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
+import { ThemeProvider } from "next-themes";
 
-const inter = Inter({ subsets: ["latin"] });
+const pixelFont = Press_Start_2P({ 
+  weight: "400", 
+  subsets: ["latin"],
+  variable: "--font-pixel"
+});
 
 export const metadata: Metadata = {
-  title: "PixCI Web - Pixel Art Converter",
-  description: "Convert images to PXVG format and back with AI-powered pixel art tools",
+  title: "PixCI - AI Pixel Studio",
+  description: "Trình chỉnh sửa Pixel Art bằng AI chuẩn Awwwards",
 };
 
 export default function RootLayout({
@@ -17,12 +22,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
-      <body className={inter.className}>
-        <QueryProvider>
-          {children}
-          <ToastProvider />
-        </QueryProvider>
+    <html lang="vi" suppressHydrationWarning>
+      <body className={`${pixelFont.variable} font-pixel antialiased overflow-hidden selection:bg-black selection:text-[#00ff00] dark:selection:bg-[#00ff00] dark:selection:text-black`}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <QueryProvider>
+            {children}
+            <ToastProvider />
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

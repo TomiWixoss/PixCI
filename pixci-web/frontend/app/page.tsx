@@ -1,115 +1,166 @@
 'use client'
 
-import { EncodeTab } from '@/components/features/EncodeTab'
-import { DecodeTab } from '@/components/features/DecodeTab'
-import { AIEditTab } from '@/components/features/AIEditTab'
-import { useAppStore } from '@/lib/store/useAppStore'
-import { Image as ImageIcon, Code, Sparkles, Github } from 'lucide-react'
+import { useState } from 'react'
+import { useAIEditor } from '@/lib/hooks/useAIEditor'
+import { useEncode } from '@/lib/hooks/useEncode'
+import { FloatingInput } from '@/components/ui/FloatingInput'
+import { HistoryTimeline } from '@/components/features/HistoryTimeline'
+import { ImageUploader } from '@/components/features/ImageUploader'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useTheme } from 'next-themes'
+import { Moon, Sun, Monitor, Image as ImageIcon } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export default function Home() {
-  const { activeTab, setActiveTab } = useAppStore()
+  const { theme, setTheme } = useTheme()
+  const encodeMutation = useEncode()
+  const {
+    history,
+    currentIndex,
+    currentNode,
+    isProcessing,
+    submitPrompt,
+    rollbackTo,
+    addInitialState,
+    reset
+  } = useAIEditor()
+
+  const [initialFile, setInitialFile] = useState<File | null>(null)
+
+  const handleInitialUpload = async (file: File) => {
+    setInitialFile(file)
+    const renderPreview = new Promise<string>((resolve) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.readAsDataURL(file)
+    })
+
+    try {
+      const result = await encodeMutation.mutateAsync({
+        file,
+        block_size: 1, // Default to highest fidelity auto-detect
+        auto_detect: true,
+      })
+
+      const base64Preview = await renderPreview
+      addInitialState(result.pxvg_code, base64Preview)
+      toast.success('PXVG Engine Khởi tạo OK!', { icon: '🚀' })
+    } catch (error) {
+      toast.error('Có lỗi khi số hoá ảnh!')
+      setInitialFile(null)
+    }
+  }
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <ImageIcon className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">PixCI Web</h1>
-                <p className="text-sm text-gray-600">Pixel Art Converter</p>
-              </div>
-            </div>
-            <a
-              href="https://github.com/yourusername/pixci"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors"
-            >
-              <Github className="h-5 w-5" />
-              <span className="hidden sm:inline">GitHub</span>
-            </a>
-          </div>
-        </div>
-      </header>
+    <div className="h-screen w-screen overflow-hidden relative flex bg-white dark:bg-[#0d0d0d] transition-colors duration-500">
+      
+      {/* Settings / Top Right Float */}
+      <div className="absolute top-6 right-6 z-50 flex items-center gap-4">
+        <button 
+          onClick={toggleTheme}
+          className="brutal-card p-3 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+        >
+          {theme === 'dark' ? <Sun className="h-5 w-5 text-yellow-400" /> : <Moon className="h-5 w-5" />}
+        </button>
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tabs */}
-        <div className="mb-8">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('encode')}
-                className={`
-                  flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                  ${
-                    activeTab === 'encode'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }
-                `}
-              >
-                <ImageIcon className="h-5 w-5" />
-                Encode (Ảnh → PXVG)
-              </button>
-              <button
-                onClick={() => setActiveTab('decode')}
-                className={`
-                  flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                  ${
-                    activeTab === 'decode'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }
-                `}
-              >
-                <Code className="h-5 w-5" />
-                Decode (PXVG → Ảnh)
-              </button>
-              <button
-                onClick={() => setActiveTab('ai-edit')}
-                className={`
-                  flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                  ${
-                    activeTab === 'ai-edit'
-                      ? 'border-purple-500 text-purple-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }
-                `}
-              >
-                <Sparkles className="h-5 w-5" />
-                AI Edit (Chỉnh sửa bằng AI)
-              </button>
-            </nav>
-          </div>
-        </div>
+      {/* History Sidebar */}
+      {currentNode && (
+        <HistoryTimeline 
+          history={history} 
+          currentIndex={currentIndex} 
+          onRollback={rollbackTo} 
+        />
+      )}
 
-        {/* Tab Content */}
-        <div className="animate-fadeIn">
-          {activeTab === 'encode' && <EncodeTab />}
-          {activeTab === 'decode' && <DecodeTab />}
-          {activeTab === 'ai-edit' && <AIEditTab />}
+      {/* Main Center Canvas */}
+      <main className="flex-1 h-full flex flex-col items-center justify-center relative p-8">
+        <div className="w-full max-w-4xl flex flex-col items-center justify-center">
+          
+          <AnimatePresence mode="wait">
+            {!currentNode ? (
+              <motion.div
+                key="uploader"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, y: -50 }}
+                className="w-full max-w-xl brutal-card p-8 rounded-lg"
+              >
+                <div className="text-center mb-8">
+                  <Monitor className="h-16 w-16 mx-auto mb-4 dark:text-[#00ff00]" />
+                  <h1 className="text-2xl font-pixel font-bold mb-2 uppercase tracking-tight leading-snug">
+                    PixCI AI Studio
+                  </h1>
+                  <p className="text-gray-500 dark:text-gray-400 font-pixel text-xs leading-relaxed">
+                    Upload initial image to start editing (Pixel Style)
+                  </p>
+                </div>
+                
+                {encodeMutation.isPending ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-4">
+                    <div className="w-12 h-12 border-4 border-black dark:border-[#00ff00] border-t-transparent animate-spin rounded-full"></div>
+                    <p className="font-pixel text-xs animate-pulse">ENCODING IMAGE TO PXVG...</p>
+                  </div>
+                ) : (
+                  <ImageUploader onFileSelect={handleInitialUpload} />
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key={`canvas-${currentIndex}`}
+                initial={{ filter: 'blur(20px)', scale: 0.95 }}
+                animate={{ filter: 'blur(0px)', scale: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="relative flex items-center justify-center w-full aspect-square max-h-[65vh] group mb-20"
+              >
+                <div className="brutal-card p-2 md:p-6 bg-white dark:bg-black rounded-sm w-full h-full flex items-center justify-center">
+                  {/* Processing Overlays */}
+                  {isProcessing && (
+                    <div className="absolute inset-0 z-20 flex bg-white/50 dark:bg-black/80 backdrop-blur-sm items-center justify-center">
+                      <div className="text-center">
+                        <Monitor className="h-12 w-12 mx-auto mb-4 animate-bounce dark:text-[#00ff00]" />
+                        <div className="text-[#00ff00] font-pixel text-sm glitch">PROCESSING VECTOR...</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentNode.base64Image.startsWith('data:') ? (
+                     <img
+                       src={currentNode.base64Image}
+                       alt="AI Pixel Art"
+                       className="w-full h-full object-contain pixel-rendering"
+                     />
+                  ) : (
+                     <img
+                       src={`data:image/png;base64,${currentNode.base64Image}`}
+                       alt="AI Pixel Art"
+                       className="w-full h-full object-contain pixel-rendering"
+                     />
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="mt-16 border-t border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center text-sm text-gray-600">
-            <p>
-              PixCI Web v1.0.0 - Enterprise-grade pixel art conversion tool
-            </p>
-            <p className="mt-1">
-              Powered by FastAPI + Next.js + PXVG Format
-            </p>
-          </div>
-        </div>
-      </footer>
+      {/* Floating Terminal Input at bottom */}
+      {currentNode && (
+        <FloatingInput 
+          onSubmit={submitPrompt} 
+          isProcessing={isProcessing} 
+        />
+      )}
+      
+      {/* Raw Background Grid Effect (Optional brutalist touch) */}
+      <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.02]" 
+           style={{ backgroundImage: 'linear-gradient(var(--text-color) 1px, transparent 1px), linear-gradient(90deg, var(--text-color) 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+      </div>
     </div>
   )
 }

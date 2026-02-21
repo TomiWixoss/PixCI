@@ -4,21 +4,102 @@
   --color-border: #e5e7eb;
   --color-background: #ffffff;
   --color-foreground: #111827;
+  
+  --color-primary: #00ff00;
+  --color-secondary: #ff00ff;
+  --color-accent: #00ffff;
+  
+  --font-pixel: var(--font-pixel), monospace;
+}
+
+@layer base {
+  :root {
+    --bg-color: #fafafa;
+    --text-color: #111;
+    --brutal-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+    --brutal-border: 2px solid #000;
+    --panel-bg: #fff;
+  }
+  
+  .dark {
+    --bg-color: #0d0d0d;
+    --text-color: #e0e0e0;
+    --brutal-shadow: 4px 4px 0px 0px rgba(0,255,0,0.8);
+    --brutal-border: 2px solid #333;
+    --panel-bg: #151515;
+  }
+  
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Custom Scrollbar for inner components */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-color);
+    border-left: var(--brutal-border);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--text-color);
+    border: 1px solid var(--bg-color);
+  }
 }
 
 @layer utilities {
-  .animate-fadeIn {
-    animation: fadeIn 0.3s ease-in-out;
+  .brutal-card {
+    background-color: var(--panel-bg);
+    border: var(--brutal-border);
+    box-shadow: var(--brutal-shadow);
+    transition: all 0.2s ease;
+  }
+  
+  .brutal-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px 0px var(--text-color);
+  }
+  
+  .dark .brutal-card:hover {
+    box-shadow: 6px 6px 0px 0px var(--color-primary);
   }
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .brutal-btn {
+    background-color: var(--text-color);
+    color: var(--bg-color);
+    border: none;
+    text-transform: uppercase;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 3px 3px 0px 0px var(--color-primary);
+    transition: transform 0.1s, box-shadow 0.1s;
   }
+  
+  .brutal-btn:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0px 0px 0px 0px var(--color-primary);
+  }
+
+  .pixel-rendering {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  
+  .glitch {
+    animation: glitch 1s linear infinite;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glitch {
+  2%, 64% { transform: translate(2px,0) skew(0deg); }
+  4%, 60% { transform: translate(-2px,0) skew(0deg); }
+  62% { transform: translate(0,0) skew(5deg); }
 }
