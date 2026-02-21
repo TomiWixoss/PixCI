@@ -7,13 +7,13 @@ interface Message {
 }
 
 export interface AIEditRequest {
-  pxvgCode?: string // Optional for follow-up edits
+  newPxvgCodes?: string[]
   userPrompt: string
   conversationHistory?: Message[]
 }
 
 export interface AIEditResponse {
-  editedPxvg: string
+  editedPxvgCodes: string[]
   explanation: string
   conversationHistory: Message[]
   usage?: {

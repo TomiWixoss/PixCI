@@ -86,7 +86,7 @@ interface Message {
 
 export async function POST(request: NextRequest) {
   try {
-    const { pxvgCode, userPrompt, conversationHistory } = await request.json()
+    const { newPxvgCodes, userPrompt, conversationHistory } = await request.json()
 
     if (!userPrompt) {
       return NextResponse.json(
@@ -139,7 +139,7 @@ Keep all <row>, <dots>, <rect> exactly the same!
 
 ${PXVG_SYSTEM_CONTEXT}
 
-Return ONLY the complete PXVG XML code, no explanations.`
+Return ONLY the complete PXVG XML code, no explanations. Include multiple <pxvg> blocks if multiple images are provided.`
 
     // Build messages array
     const messages: Message[] = []
@@ -147,29 +147,29 @@ Return ONLY the complete PXVG XML code, no explanations.`
     // If there's conversation history, use it
     if (conversationHistory && Array.isArray(conversationHistory) && conversationHistory.length > 0) {
       messages.push(...conversationHistory)
+      
+      let promptStr = `Continue editing: ${userPrompt}\n`;
+      if (newPxvgCodes && newPxvgCodes.length > 0) {
+         promptStr += `\nNEW IMAGES ADDED:\n${newPxvgCodes.map((c: string, i: number) => `--- NEW IMAGE ${i+1} ---\n${c}`).join('\n')}\n`;
+      }
+      promptStr += `\nReturn ALL the PXVG codes (both old and new) with your edits applied. Separate multiple <pxvg> blocks with newlines:`
+      
       // Add new user prompt
       messages.push({
         role: 'user',
-        content: `Continue editing: ${userPrompt}
-
-Return ONLY the edited PXVG code:`,
+        content: promptStr,
       })
     } else {
       // First message - include the original PXVG code
-      if (!pxvgCode) {
+      if (!newPxvgCodes || newPxvgCodes.length === 0) {
         return NextResponse.json(
-          { error: 'Missing pxvgCode for first edit' },
+          { error: 'Missing newPxvgCodes for first edit' },
           { status: 400 }
         )
       }
       messages.push({
         role: 'user',
-        content: `USER INSTRUCTION: ${userPrompt}
-
-CURRENT PXVG CODE:
-${pxvgCode}
-
-Return ONLY the edited PXVG code (no explanations):`,
+        content: `USER INSTRUCTION: ${userPrompt}\n\nCURRENT PXVG CODES:\n${newPxvgCodes.map((c: string, i: number) => `--- IMAGE ${i+1} ---\n${c}`).join('\n')}\n\nReturn ALL edited PXVG codes (no explanations, separate multiple <pxvg> blocks with newlines):`,
       })
     }
 
@@ -178,7 +178,7 @@ Return ONLY the edited PXVG code (no explanations):`,
       model: 'gemini-3-flash-preview',
       systemPrompt,
       messages,
-      temperature: 0.7,
+      temperature: 1.0,
       max_tokens: 65536,
     })
 
@@ -186,20 +186,20 @@ Return ONLY the edited PXVG code (no explanations):`,
     const contentStr = typeof content === 'string' ? content : JSON.stringify(content)
 
     // Extract PXVG code from response
-    const pxvgMatch = contentStr.match(/<pxvg[\s\S]*?<\/pxvg>/i)
-    const editedPxvg = pxvgMatch ? pxvgMatch[0] : contentStr
+    const pxvgMatches = contentStr.match(/<pxvg[\s\S]*?<\/pxvg>/gi)
+    const editedPxvgCodes = pxvgMatches ? Array.from(pxvgMatches) : [contentStr]
 
     // Build updated conversation history
     const updatedHistory = [
       ...messages,
       {
         role: 'assistant' as const,
-        content: editedPxvg,
+        content: contentStr,
       },
     ]
 
     return NextResponse.json({
-      editedPxvg,
+      editedPxvgCodes,
       explanation: 'AI edited your pixel art based on your instruction',
       usage: response.usage,
       conversationHistory: updatedHistory,

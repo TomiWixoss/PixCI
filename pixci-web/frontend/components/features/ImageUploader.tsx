@@ -8,13 +8,13 @@ import { PixelUpload } from '../ui/svgs/PixelUpload'
 import { PixelImage } from '../ui/svgs/PixelImage'
 
 interface ImageUploaderProps {
-  onFileSelect: (file: File) => void
+  onFilesSelect: (files: File[]) => void
   maxSize?: number
   accept?: Record<string, string[]>
 }
 
 export function ImageUploader({ 
-  onFileSelect, 
+  onFilesSelect, 
   maxSize = 10 * 1024 * 1024,
   accept = {
     'image/png': ['.png'],
@@ -23,40 +23,36 @@ export function ImageUploader({
     'image/webp': ['.webp'],
   }
 }: ImageUploaderProps) {
-  const [preview, setPreview] = useState<string | null>(null)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previews, setPreviews] = useState<string[]>([])
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0]
-    if (file) {
-      setSelectedFile(file)
-      const reader = new FileReader()
-      reader.onload = () => {
-        setPreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-      onFileSelect(file)
+    if (acceptedFiles.length > 0) {
+      setSelectedFiles(acceptedFiles)
+      const newPreviews = acceptedFiles.map(file => URL.createObjectURL(file))
+      setPreviews(newPreviews)
+      onFilesSelect(acceptedFiles)
     }
-  }, [onFileSelect])
+  }, [onFilesSelect])
 
   const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
     onDrop,
     accept,
     maxSize,
-    multiple: false,
+    multiple: true,
   })
 
   const clearFile = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setPreview(null)
-    setSelectedFile(null)
+    setPreviews([])
+    setSelectedFiles([])
   }
 
   return (
     <div {...getRootProps()} className="w-full min-h-[400px] cursor-pointer">
       <input {...getInputProps()} />
       
-      {!preview ? (
+      {previews.length === 0 ? (
         <div className={cn(
           "min-h-[400px] flex flex-col items-center justify-center p-8 transition-all rounded-xl",
           isDragActive 
@@ -99,15 +95,20 @@ export function ImageUploader({
             </p>
           )}
         </div>
-      ) : (
+      ) : previews.length > 0 ? (
         <div className="relative min-h-[400px] flex items-center justify-center p-8 bg-[var(--bg-elevated)] rounded-xl">
           <div className="relative">
             <div className="w-64 h-64 rounded-xl overflow-hidden border-2 border-[var(--border-subtle)]">
               <img
-                src={preview}
+                src={previews[0]}
                 alt="Preview"
                 className="w-full h-full object-cover pixel-rendering"
               />
+              {previews.length > 1 && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-3xl">
+                  +{previews.length - 1}
+                </div>
+              )}
             </div>
             
             <button
@@ -119,11 +120,10 @@ export function ImageUploader({
           </div>
           
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-            <p className="text-sm text-[var(--text-secondary)]">{selectedFile?.name}</p>
-            <p className="text-xs text-[var(--text-muted)] text-center">{selectedFile && formatFileSize(selectedFile.size)}</p>
+            <p className="text-sm text-[var(--text-secondary)] whitespace-nowrap">{selectedFiles.length} file(s) selected</p>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

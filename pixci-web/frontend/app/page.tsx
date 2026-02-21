@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAIEditor } from '@/lib/hooks/useAIEditor'
 import { useEncode } from '@/lib/hooks/useEncode'
+import { decodeService } from '@/lib/api/services'
 import { FloatingInput } from '@/components/ui/FloatingInput'
 import { HistoryTimeline } from '@/components/features/HistoryTimeline'
 import { ImageUploader } from '@/components/features/ImageUploader'
@@ -12,31 +13,81 @@ import { useTheme } from 'next-themes'
 import { PixelStar } from '@/components/ui/svgs/PixelStar'
 import { PixelLogo } from '@/components/ui/svgs/PixelLogo'
 import { PixelPalette } from '@/components/ui/svgs/PixelPalette'
-import { Sun, Moon } from 'lucide-react'
+import { Sun, Moon, Download, Trash2, PlusCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function Home() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const encodeMutation = useEncode()
-  const { history, currentIndex, currentNode, isProcessing, submitPrompt, rollbackTo, addInitialState } = useAIEditor()
+  const { history, currentIndex, currentNode, isProcessing, submitPrompt, rollbackTo, addInitialState, appendImagesToCurrent, reset } = useAIEditor()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => setMounted(true), [])
 
-  const handleInitialUpload = async (file: File) => {
-    const renderPreview = new Promise<string>((resolve) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.readAsDataURL(file)
-    })
-
+  const handleInitialUpload = async (files: File[]) => {
     try {
-      const result = await encodeMutation.mutateAsync({ file, block_size: 1, auto_detect: true })
-      const base64Preview = await renderPreview
-      addInitialState(result.pxvg_code, base64Preview)
-      toast.success('Hệ thống đã nhận diện dữ liệu ảnh.')
+      const encodePromises = files.map(file => encodeMutation.mutateAsync({ file, block_size: 1, auto_detect: true }))
+      const results = await Promise.all(encodePromises)
+
+      const previewPromises = files.map(file => new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.readAsDataURL(file)
+      }))
+      const base64Previews = await Promise.all(previewPromises)
+
+      addInitialState(results.map(r => r.pxvg_code), base64Previews)
+      toast.success(`Đã tải lên ${files.length} ảnh.`)
     } catch (error) {
       toast.error('Gặp lỗi trong quá trình xử lý ảnh.')
+    }
+  }
+
+  const handleAddMoreFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    
+    const toastId = toast.loading('Đang xử lý ảnh mới...')
+    try {
+      const encodePromises = files.map(file => encodeMutation.mutateAsync({ file, block_size: 1, auto_detect: true }))
+      const results = await Promise.all(encodePromises)
+      
+      const previewPromises = files.map(file => new Promise<string>(resolve => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.readAsDataURL(file)
+      }))
+      const previews = await Promise.all(previewPromises)
+
+      appendImagesToCurrent(results.map(r => r.pxvg_code), previews)
+      toast.success(`Đã thêm ${files.length} ảnh mới!`, { id: toastId })
+    } catch (err) {
+      toast.error('Lỗi thêm ảnh', { id: toastId })
+    }
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleDownloadOriginals = async () => {
+    if (!currentNode) return
+    const toastId = toast.loading('Đang xử lý ảnh gốc...')
+    try {
+      const promises = currentNode.pxvgCodes.map(code => 
+        decodeService.decodePxvg({ pxvg_code: code, scale: 1 })
+      )
+      const results = await Promise.all(promises)
+      
+      results.forEach((res, idx) => {
+        const link = document.createElement('a')
+        link.href = res.image_base64.startsWith('data:') ? res.image_base64 : `data:image/png;base64,${res.image_base64}`
+        link.download = `pixel-art-original-${Date.now()}-${idx + 1}.png`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      })
+      toast.success('Đã tải xuống kích thước gốc!', { id: toastId })
+    } catch (e) {
+      toast.error('Lỗi khi tải ảnh', { id: toastId })
     }
   }
 
@@ -50,15 +101,40 @@ export default function Home() {
             <span className="font-bold text-sm tracking-widest uppercase mt-0.5">PixCI Studio</span>
           </div>
           
-          <button 
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="art-canvas !p-3 !rounded-full hover:bg-[var(--accent-yellow)] hover:shadow-[4px_4px_0_var(--accent-pink)] transition-all"
-          >
-            {mounted && theme === 'dark' 
-              ? <Sun className="w-6 h-6 text-[var(--text-color)]" /> 
-              : <Moon className="w-6 h-6 text-[var(--text-color)]" />
-            }
-          </button>
+          <div className="flex gap-3">
+            {currentNode && (
+              <>
+                <button 
+                  onClick={reset}
+                  title="Xóa tất cả (Reset)"
+                  className="art-canvas !p-3 !rounded-full bg-white dark:bg-transparent hover:bg-[var(--accent-pink)] dark:hover:bg-[var(--accent-pink)] hover:shadow-[4px_4px_0_var(--text-color)] transition-all"
+                >
+                  <Trash2 className="w-5 h-5 text-[var(--text-color)]" />
+                </button>
+                <button 
+                  onClick={handleDownloadOriginals}
+                  title="Tải ảnh gốc"
+                  className="art-canvas !p-3 !rounded-full bg-white dark:bg-transparent hover:bg-[var(--accent-purple)] dark:hover:bg-[var(--accent-purple)] hover:shadow-[4px_4px_0_var(--text-color)] transition-all"
+                >
+                  <Download className="w-5 h-5 text-[var(--text-color)]" />
+                </button>
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Thêm ảnh"
+                  className="art-canvas !p-3 !rounded-full bg-[var(--accent-yellow)] hover:bg-[var(--accent-yellow)] hover:shadow-[4px_4px_0_var(--text-color)] transition-all"
+                >
+                  <PlusCircle className="w-5 h-5 text-[var(--text-color)]" />
+                </button>
+                <input type="file" ref={fileInputRef} multiple className="hidden" accept="image/png,image/jpeg,image/gif,image/webp" onChange={handleAddMoreFiles} />
+              </>
+            )}
+            <button 
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="art-canvas !p-3 !rounded-full hover:bg-[var(--accent-yellow)] hover:shadow-[4px_4px_0_var(--accent-pink)] transition-all"
+            >
+              {mounted && theme === 'dark' ? <Sun className="w-5 h-5 text-[var(--text-color)]" /> : <Moon className="w-5 h-5 text-[var(--text-color)]" />}
+            </button>
+          </div>
         </div>
 
         {currentNode && (
@@ -94,7 +170,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="mt-4">
-                    <ImageUploader onFileSelect={handleInitialUpload} />
+                    <ImageUploader onFilesSelect={handleInitialUpload} />
                   </div>
                 )}
               </div>
@@ -105,7 +181,7 @@ export default function Home() {
               initial={{ scale: 0.9, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               transition={{ type: "spring", bounce: 0.4 }}
-              className="relative flex items-center justify-center w-full max-w-3xl aspect-square max-h-[60vh]"
+              className={`relative flex items-center justify-center w-full max-h-[60vh] ${currentNode.base64Images.length > 1 ? 'max-w-5xl' : 'max-w-3xl aspect-square'}`}
             >
               <div className="absolute -bottom-4 w-[110%] h-8 bg-[var(--accent-yellow)] border-4 border-[var(--text-color)] z-0 rounded-full"></div>
               
@@ -119,10 +195,16 @@ export default function Home() {
                   </div>
                 )}
 
-                <PixelScrambleCanvas 
-                  base64Image={currentNode.base64Image} 
-                  isProcessing={isProcessing} 
-                />
+                <div className={`w-full h-full flex items-center justify-center gap-4 ${currentNode.base64Images.length > 1 ? 'flex-wrap overflow-y-auto content-center p-2' : ''}`}>
+                  {currentNode.base64Images.map((img, idx) => (
+                    <div key={idx} className={`relative flex items-center justify-center ${currentNode.base64Images.length > 1 ? 'w-[45%] md:w-[30%] aspect-square' : 'w-full h-full'}`}>
+                      <PixelScrambleCanvas 
+                        base64Image={img} 
+                        isProcessing={isProcessing} 
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}

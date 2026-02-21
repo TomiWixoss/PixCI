@@ -39,7 +39,7 @@ export function HistoryTimeline({ history, currentIndex, onRollback }: HistoryTi
             >
               <div className="w-16 h-16 border-2 border-[var(--text-color)] bg-[var(--bg-color)] p-1 overflow-hidden">
                 <img 
-                  src={node.base64Image.startsWith('data:') ? node.base64Image : `data:image/png;base64,${node.base64Image}`} 
+                  src={node.base64Images[0].startsWith('data:') ? node.base64Images[0] : `data:image/png;base64,${node.base64Images[0]}`} 
                   className="w-full h-full object-cover pixel-rendering" 
                   alt="thumb"
                 />
