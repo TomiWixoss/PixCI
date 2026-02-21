@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Press_Start_2P } from "next/font/google";
+import { Space_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { ThemeProvider } from "next-themes";
 
-const pixelFont = Press_Start_2P({ 
-  weight: "400", 
-  subsets: ["latin"],
+const pixelFont = Space_Mono({ 
+  weight: ["400", "700"], 
+  subsets: ["latin", "vietnamese"],
   variable: "--font-pixel"
 });
 

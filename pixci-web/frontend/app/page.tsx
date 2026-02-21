@@ -44,7 +44,7 @@ export default function Home() {
 
       const base64Preview = await renderPreview
       addInitialState(result.pxvg_code, base64Preview)
-      toast.success('PXVG Engine Khởi tạo OK!', { icon: '🚀' })
+      toast.success('PXVG Engine Khởi tạo thành công!', { icon: '🚀' })
     } catch (error) {
       toast.error('Có lỗi khi số hoá ảnh!')
       setInitialFile(null)
@@ -56,19 +56,9 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden relative flex bg-white dark:bg-[#0d0d0d] transition-colors duration-500">
+    <div className="h-screen w-screen overflow-hidden relative flex flex-col bg-white dark:bg-[#0d0d0d] transition-colors duration-500">
       
-      {/* Settings / Top Right Float */}
-      <div className="absolute top-6 right-6 z-50 flex items-center gap-4">
-        <button 
-          onClick={toggleTheme}
-          className="brutal-card p-3 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
-        >
-          {theme === 'dark' ? <Sun className="h-5 w-5 text-yellow-400" /> : <Moon className="h-5 w-5" />}
-        </button>
-      </div>
-
-      {/* History Sidebar */}
+      {/* History Top Bar */}
       {currentNode && (
         <HistoryTimeline 
           history={history} 
@@ -77,8 +67,18 @@ export default function Home() {
         />
       )}
 
+      {/* Settings / Top Right Float - Lowered slightly to not overlap timeline */}
+      <div className={`absolute z-50 flex items-center gap-4 right-6 ${currentNode ? 'top-28' : 'top-6'}`}>
+        <button 
+          onClick={toggleTheme}
+          className="brutal-card p-3 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+        >
+          {theme === 'dark' ? <Sun className="h-5 w-5 text-yellow-400" /> : <Moon className="h-5 w-5" />}
+        </button>
+      </div>
+
       {/* Main Center Canvas */}
-      <main className="flex-1 h-full flex flex-col items-center justify-center relative p-8">
+      <main className={`flex-1 flex flex-col items-center justify-center relative p-8 w-full ${currentNode ? 'mt-24' : ''}`}>
         <div className="w-full max-w-4xl flex flex-col items-center justify-center">
           
           <AnimatePresence mode="wait">
@@ -95,15 +95,15 @@ export default function Home() {
                   <h1 className="text-2xl font-pixel font-bold mb-2 uppercase tracking-tight leading-snug">
                     PixCI AI Studio
                   </h1>
-                  <p className="text-gray-500 dark:text-gray-400 font-pixel text-xs leading-relaxed">
-                    Upload initial image to start editing (Pixel Style)
+                  <p className="text-gray-500 dark:text-gray-400 font-pixel text-[10px] leading-relaxed uppercase">
+                    TẢI ẢNH GỐC LÊN ĐỂ BẮT ĐẦU CHỈNH SỬA BẰNG AI
                   </p>
                 </div>
                 
                 {encodeMutation.isPending ? (
                   <div className="flex flex-col items-center justify-center py-12 gap-4">
                     <div className="w-12 h-12 border-4 border-black dark:border-[#00ff00] border-t-transparent animate-spin rounded-full"></div>
-                    <p className="font-pixel text-xs animate-pulse">ENCODING IMAGE TO PXVG...</p>
+                    <p className="font-pixel text-[10px] uppercase font-bold animate-pulse">ĐANG MÃ HOÁ ẢNH SANG PRE-PXVG...</p>
                   </div>
                 ) : (
                   <ImageUploader onFileSelect={handleInitialUpload} />
@@ -115,15 +115,15 @@ export default function Home() {
                 initial={{ filter: 'blur(20px)', scale: 0.95 }}
                 animate={{ filter: 'blur(0px)', scale: 1 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
-                className="relative flex items-center justify-center w-full aspect-square max-h-[65vh] group mb-20"
+                className="relative flex items-center justify-center w-full aspect-square max-h-[60vh] group mb-24"
               >
-                <div className="brutal-card p-2 md:p-6 bg-white dark:bg-black rounded-sm w-full h-full flex items-center justify-center">
+                <div className="brutal-card p-2 md:p-6 bg-white dark:bg-black rounded-sm w-full h-full flex items-center justify-center relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,255,0,0.3)]">
                   {/* Processing Overlays */}
                   {isProcessing && (
-                    <div className="absolute inset-0 z-20 flex bg-white/50 dark:bg-black/80 backdrop-blur-sm items-center justify-center">
+                    <div className="absolute inset-0 z-20 flex bg-white/70 dark:bg-black/80 backdrop-blur-sm items-center justify-center">
                       <div className="text-center">
                         <Monitor className="h-12 w-12 mx-auto mb-4 animate-bounce dark:text-[#00ff00]" />
-                        <div className="text-[#00ff00] font-pixel text-sm glitch">PROCESSING VECTOR...</div>
+                        <div className="text-black dark:text-[#00ff00] font-pixel font-bold text-sm glitch uppercase">HỆ THỐNG ĐANG XỬ LÝ...</div>
                       </div>
                     </div>
                   )}
@@ -158,7 +158,7 @@ export default function Home() {
       )}
       
       {/* Raw Background Grid Effect (Optional brutalist touch) */}
-      <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.02]" 
+      <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.05]" 
            style={{ backgroundImage: 'linear-gradient(var(--text-color) 1px, transparent 1px), linear-gradient(90deg, var(--text-color) 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
       </div>
     </div>
