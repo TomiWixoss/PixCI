@@ -13,7 +13,7 @@ export function HistoryTimeline({ history, currentIndex, onRollback }: HistoryTi
   if (history.length <= 0) return null
 
   return (
-    <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide py-4 px-2">
+    <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide py-1 px-2">
       {history.map((node, index) => {
         const isActive = index === currentIndex
         const isFuture = index > currentIndex
@@ -29,13 +29,13 @@ export function HistoryTimeline({ history, currentIndex, onRollback }: HistoryTi
               onClick={() => onRollback(index)}
               disabled={isActive}
               className={`
-                group flex flex-col items-center bg-white p-2 border-4 border-[var(--text-color)] transition-all
+                group flex flex-col items-center bg-white p-2 border-3 border-[var(--text-color)] transition-all
                 ${isActive 
-                  ? 'bg-[var(--accent-pink)] -translate-y-2 shadow-[4px_4px_0_var(--text-color)]' 
-                  : 'hover:-translate-y-1 hover:shadow-[4px_4px_0_var(--accent-purple)]'}
+                  ? 'bg-[var(--accent-pink)] -translate-y-1 shadow-[4px_4px_0_var(--text-color)]' 
+                  : 'hover:-translate-y-0.5 hover:shadow-[3px_3px_0_var(--accent-purple)]'}
                 ${isFuture ? 'opacity-40 grayscale' : ''}
               `}
-              style={{ transform: isActive ? 'rotate(0deg)' : `rotate(${index % 2 === 0 ? '-3deg' : '3deg'})` }}
+              style={{ transform: isActive ? 'rotate(0deg)' : `rotate(${index % 2 === 0 ? '-2deg' : '2deg'})` }}
             >
               <div className="w-16 h-16 border-2 border-[var(--text-color)] bg-[var(--bg-color)] p-1 overflow-hidden">
                 <img 
@@ -44,7 +44,7 @@ export function HistoryTimeline({ history, currentIndex, onRollback }: HistoryTi
                   alt="thumb"
                 />
               </div>
-              <div className={`mt-2 text-[8px] font-bold uppercase truncate w-16 text-center ${isActive ? 'text-white' : 'text-[var(--text-color)]'}`}>
+              <div className={`mt-1.5 text-[8px] font-bold uppercase truncate w-16 text-center ${isActive ? 'text-white' : 'text-[var(--text-color)]'}`}>
                 {node.prompt === 'Ảnh Gốc' ? 'ORIGIN' : `V.${index}`}
               </div>
             </button>

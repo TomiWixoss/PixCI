@@ -45,27 +45,29 @@ export default function Home() {
         <PixelCloud className="w-48 h-auto text-white drop-shadow-[4px_4px_0_var(--text-color)]" />
       </motion.div>
 
-      <header className="w-full p-6 flex justify-between items-center z-50">
-        <div className="flex items-center gap-4 art-canvas !box-shadow-[4px_4px_0_var(--text-color)] !p-3 rounded-full">
-          <div className="w-6 h-6 bg-[var(--accent-yellow)] border-2 border-[var(--text-color)] rounded-full animate-bounce"></div>
-          <span className="font-bold text-sm tracking-widest uppercase">PixCI Art Studio</span>
+      <header className="w-full p-4 z-50">
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center gap-4 art-canvas !box-shadow-[4px_4px_0_var(--text-color)] !p-3 rounded-full">
+            <div className="w-6 h-6 bg-[var(--accent-yellow)] border-2 border-[var(--text-color)] rounded-full animate-bounce"></div>
+            <span className="font-bold text-sm tracking-widest uppercase">PixCI Art Studio</span>
+          </div>
+          
+          <button 
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="art-canvas !p-3 !rounded-full hover:bg-[var(--accent-yellow)] transition-colors"
+          >
+            <PixelWand className="w-6 h-6 text-[var(--text-color)]" />
+          </button>
         </div>
-        
-        <button 
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="art-canvas !p-3 !rounded-full hover:bg-[var(--accent-yellow)] transition-colors"
-        >
-          <PixelWand className="w-6 h-6 text-[var(--text-color)]" />
-        </button>
-      </header>
 
-      <main className="flex-1 w-full flex flex-col items-center justify-center p-4 relative z-10">
         {currentNode && (
-          <div className="w-full max-w-4xl mb-4 z-40">
+          <div className="w-full max-w-5xl mx-auto">
             <HistoryTimeline history={history} currentIndex={currentIndex} onRollback={rollbackTo} />
           </div>
         )}
-        
+      </header>
+
+      <main className="flex-1 w-full flex flex-col items-center justify-center p-4 relative z-10">
         <AnimatePresence mode="wait">
           {!currentNode ? (
             <motion.div
