@@ -135,6 +135,7 @@ Tuyệt đối KHÔNG trả về code Python. CHỈ trả về một block XML d
 - Hình chữ nhật: <rect x="5" y="5" w="10" h="10" c="COLOR_KEY" />
 - Chuỗi điểm ngang (Nén Token): <row y="15" x1="5" x2="20" c="COLOR_KEY" />
 - Điểm đớn lẻ: <dot x="5" y="5" c="COLOR_KEY" />
+- Nhiều điểm lẻ cùng màu (Siêu nén Token): <dots pts="4,3 5,3 8,3 9,3" c="COLOR_KEY" />
 - Đường thẳng: <line x1="0" y1="0" x2="10" y2="10" c="COLOR_KEY" />
 - Hình tròn (Tĩnh): <circle cx="16" cy="16" r="8" c="COLOR_KEY" />
 - Đa giác: <polygon pts="10,10 20,20 10,20" c="COLOR_KEY" />

@@ -109,6 +109,13 @@ def decode_pxvg(text_path: Path, output_path: Path, scale: int = 1) -> Tuple[int
                     x = int(attr.get('x', 0))
                     y = int(attr.get('y', 0))
                     canvas.set_pixel((x, y), c)
+                elif stag == 'dots':
+                    pts_str = attr.get('pts', attr.get('points', ''))
+                    if pts_str:
+                        for pt in pts_str.split():
+                            if ',' in pt:
+                                px, py = pt.split(',')
+                                canvas.set_pixel((int(px), int(py)), c)
                 elif stag == 'line':
                     x1 = int(attr.get('x1', 0))
                     y1 = int(attr.get('y1', 0))
@@ -175,8 +182,13 @@ def encode_pxvg(image_path: Path, output_path: Path, block_size: int = 1, auto_d
         for y, xs, xe, color in multi_runs:
             f.write(f'    <row y="{y}" x1="{xs}" x2="{xe}" c="{color}" />\n')
             
+        dots_by_color = {}
         for y, x, color in single_pixels:
-            f.write(f'    <dot x="{x}" y="{y}" c="{color}" />\n')
+            dots_by_color.setdefault(color, []).append(f"{x},{y}")
+            
+        for color, pts in sorted(dots_by_color.items()):
+            pts_str = " ".join(pts)
+            f.write(f'    <dots c="{color}" pts="{pts_str}" />\n')
             
         f.write('  </layer>\n')
         f.write('</pxvg>\n')
