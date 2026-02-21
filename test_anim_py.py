@@ -14,19 +14,19 @@ def test_animation():
     # 1. KHU VỰC ĐỊNH NGHĨA
     # Bộ phận 1: Thân con Slime (mặc định)
     slime_body = pixci.Canvas(32, 32)
-    slime_body.palette = palette
+    slime_body.add_palette(palette)
     slime_body.draw_dome(16, 28, 20, 12, "09")
     slime_body.draw_rows([(28, 6, 26, "10")]) # Bóng mờ dưới đáy
     
     # Bộ phận 1 (biến thể lùn): Thân con Slime
     slime_body_squish = pixci.Canvas(32, 32)
-    slime_body_squish.palette = palette
+    slime_body_squish.add_palette(palette)
     slime_body_squish.draw_dome(16, 28, 22, 8, "09")
     slime_body_squish.draw_rows([(28, 5, 27, "10")])
     
     # Bộ phận 2: Đôi mắt
     slime_eyes = pixci.Canvas(32, 32)
-    slime_eyes.palette = palette
+    slime_eyes.add_palette(palette)
     slime_eyes.fill_rect((12, 20), (13, 22), "01") # w=2, h=3
     slime_eyes.fill_rect((18, 20), (19, 22), "01")
     

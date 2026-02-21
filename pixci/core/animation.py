@@ -2,6 +2,7 @@ from typing import List, Optional
 from PIL import Image
 
 from .canvas import Canvas
+from .canvas_base import hex2rgba
 
 class Animation:
     """
@@ -17,9 +18,11 @@ class Animation:
         self.master_palette = {}
         
     def add_palette(self, palette_dict: dict):
-        self.master_palette.update(palette_dict)
+        for k, v in palette_dict.items():
+            rgba = hex2rgba(v) if isinstance(v, str) and str(v).startswith("#") else v
+            self.master_palette[k] = rgba
         for frame in self.frames:
-            frame.palette.update(palette_dict)
+            frame.palette.update(self.master_palette)
             
     def load_palette(self, name: str, prefix: str = ""):
         # Tạo canvas tạm để gọi logic load_palette đã có
