@@ -1,0 +1,72 @@
+# PixCI Python Code Engine
+> PixCI Python Library là một thư viện hỗ trợ Trí tuệ Nhân tạo (LLMs) vẽ Pixel Art dưới dạng mã lập trình Python (Procedural Python Code) với độ chính xác và tính thẩm mỹ cao. Bằng cách sử dụng các hàm API ngữ nghĩa (Semantic Spatial API), AI không cần phải tính toán từng tọa độ pixel thủ công.
+
+## 1. Khởi tạo Canvas
+Mọi dự án bắt đầu bằng việc import thư viện và tạo Canvas.
+```python
+import pixci
+canvas = pixci.Canvas(32, 32)
+```
+- Lưu file sau khi hoàn thành: `canvas.save("output_name.png", scale=10)` (Phải lưu ở cuối code).
+
+## 2. Hệ thống Bảng màu & Hue-Shifting (Màu sắc)
+Vẽ Pixel Art cần quản lý bằng bảng màu hạn chế (Palette), không dùng trực tiếp mã HEX khi vẽ.
+- **Tải bảng màu có sẵn:** Hỗ trợ hơn 4000 bảng màu.
+  `canvas.load_palette("endesga-32")`
+  `canvas.load_palette("pico-8", prefix="P_")`
+- **Khai báo màu thủ công:**
+  `canvas.add_palette({"R1": "#E62E2DFF", "G1": "#1E1A20FF"})`
+- **Tự động sinh màu đổ bóng (Hue-Shift):**
+  `shades = canvas.auto_shade("#E62E2D", levels=2)` -> Trả về dict: `{"dark2", "dark1", "base", "light1", "light2"}`.
+
+## 3. Hệ thống Hỗ trợ Tọa độ (Spatial Helpers)
+Tránh cộng trừ thủ công. Hãy dùng các hàm dưới đây để lấy biến mốc trước khi vẽ:
+- `cx, cy = canvas.get_center()`: Trung tâm canvas.
+- `ground_y = canvas.get_ground(margin=2)`: Tọa độ y mặt đất để đặt chân vật thể.
+- `y_new = canvas.anchor_above(base_y, offset)`: Lấy tọa độ y dịch LÊN TRÊN.
+- `y_new = canvas.anchor_below(base_y, offset)`: Lấy tọa độ y dịch XUỐNG DƯỚI.
+- `x0, x1 = canvas.span(center_x, size)`: Tính x_start và x_end đối xứng qua tâm.
+- `x0, y0, x1, y1 = canvas.bbox(cx, cy, w, h)`: Bounding box đối xứng từ tâm.
+
+## 4. Quản lý Lớp (Layering & Alpha lock)
+Quy hoạch hình từ xa tới gần.
+- `canvas.add_layer("name")`: Tạo và switch sang layer mới.
+- `canvas.set_layer("name")`: Đổi active layer.
+- `canvas.alpha_lock = True/False`: Khi bật True, các hàm vẽ sẽ chỉ ghi đè lên những vùng ĐÃ CÓ MÀU (dùng để tô sáng/tối không bị lem).
+- `canvas.merge_layers("base", "top")`: Trộn layer top xuống layer base.
+
+## 5. Vẽ Hình Học Cơ Bản (Primitives)
+Luôn truyền tên mã màu (Ví dụ: "R1").
+- `canvas.set_pixel((x, y), "color")`
+- `canvas.draw_line((x0,y0), (x1,y1), "color")`
+- `canvas.fill_rect((x0,y0), (x1,y1), "color")`
+- `canvas.fill_circle((cx, cy), radius, "color")`
+- `canvas.fill_polygon([(x1,y1), (x2,y2)...], "color")`
+- **Siêu nén dải pixel (Thay cho nhiều fill_rect):** 
+  `canvas.draw_rows([(y, x_start, x_end, "color"), ...])`
+
+## 6. Vẽ Hình Ngữ Nghĩa & Khối Neo (Semantic Shapes)
+Đây là cách tốt nhất để tạo hình khối không cần tính toán phức tạp.
+- `canvas.fill_rect_centered((cx, cy), w, h, "color")`: Hình chữ nhật bung từ tâm.
+- `canvas.fill_ellipse_anchored((cx, cy), rx, ry, "color", align="bottom")`: Elip neo ở đáy (tốt cho bóng dưới chân hoặc chóp nấm).
+- `canvas.draw_dome(cx, base_y, width, height, "color")`: Hình vòm/bán nguyệt úp xuống.
+- `canvas.draw_taper(cx, top_y, bottom_y, top_w, bottom_w, "color")`: Vẽ hình thuôn hẹp dần (thân cành, sừng, rễ).
+- `canvas.draw_blob((cx, cy), rx, ry, "color", noise=0.15)`: Khối bất định (chất lỏng, mây).
+- `canvas.draw_gem((cx, cy), width, height, ["dark_color", "mid", "light"])`: Vẽ khối pha lê nứt góc đa diện.
+
+## 7. Đổ Bóng & Gradient 3D (3D Rendering)
+Các hàm yêu cầu List Palette cho gradient 3D.
+- `canvas.draw_sphere((cx, cy), radius, ["dark", "mid", "light"], light_dir="top_left")`
+- `canvas.fill_cylinder((cx, base_y), width, height, ["dark", "mid", "light"], light_dir="top_left")`
+- `canvas.fill_dither((x0,y0,x1,y1), "color1", "color2", pattern="checkered")`: Trộn màu cổ điển (bayer, checkered).
+
+## 8. Xử lý Hậu kỳ (Post-processing)
+Thực hiện ở QUÁ TRÌNH CUỐI sau khi đã vẽ xong và gom layers.
+- **Tạo viền tự động:**
+  `canvas.add_outline(thickness=1, sel_out=True)` (sel_out=True sẽ tự động lấy màu vật thể, làm đậm đi để làm viền, tạo cảm giác mượt mà hơn màu đen tuyền).
+- **Phủ bóng toàn cục (Directional Shadow):**
+  `canvas.apply_directional_shadow(light_dir="top_left", intensity=0.3)`
+- **Xóa cấn viền/Khử răng cưa:**
+  `canvas.cleanup_jaggies()`
+- **Làm sáng viền ngược sáng (Highlight):**
+  `canvas.add_highlight_edge(light_dir="top_left", intensity=0.2)`
