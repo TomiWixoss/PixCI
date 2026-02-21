@@ -1,18 +1,14 @@
-# PixCI Web Backend
+# PixCI Backend
 
-Enterprise-grade FastAPI backend for pixel art conversion using PXVG format.
+FastAPI backend for PixCI - AI-powered pixel art editor.
 
 ## Features
 
-- 🚀 FastAPI with async support
-- 📝 Comprehensive API documentation (Swagger/ReDoc)
-- 🔒 Input validation with Pydantic
-- 📊 Structured logging
-- 🎨 Image to PXVG encoding
-- 🖼️ PXVG to Image decoding
-- 🔄 CORS support
-- 📁 File upload handling
-- ⚙️ Environment-based configuration
+- **PXVG Encoding/Decoding**: Convert images to/from PXVG format
+- **Image Processing**: Smart encoding with auto-detection
+- **RESTful API**: Clean API design with FastAPI
+- **Docker Support**: Easy deployment with Docker
+- **CORS Enabled**: Ready for frontend integration
 
 ## Project Structure
 
@@ -20,59 +16,52 @@ Enterprise-grade FastAPI backend for pixel art conversion using PXVG format.
 backend/
 ├── app/
 │   ├── api/
-│   │   └── v1/
-│   │       ├── encode.py      # Image → PXVG endpoints
-│   │       ├── decode.py      # PXVG → Image endpoints
-│   │       └── health.py      # Health check
-│   ├── core/
-│   │   ├── config.py          # Configuration management
-│   │   ├── exceptions.py      # Custom exceptions
-│   │   └── logging.py         # Logging setup
-│   ├── models/
-│   │   └── schemas.py         # Pydantic models
-│   ├── services/
-│   │   ├── file_service.py    # File operations
-│   │   └── pixci_service.py   # PixCI integration
-│   └── main.py                # FastAPI app
-├── logs/                      # Application logs
-├── uploads/                   # Uploaded files
-├── temp/                      # Temporary files
-├── .env                       # Environment variables
-├── requirements.txt           # Python dependencies
-└── run.py                     # Development server
+│   │   └── v1/          # API endpoints
+│   ├── core/            # Core configs
+│   ├── models/          # Pydantic models
+│   └── services/        # Business logic
+├── pixci/               # Core pixci module
+│   └── core/
+│       ├── pxvg_engine.py
+│       └── ...
+├── logs/                # Application logs
+├── uploads/             # Temporary uploads
+├── temp/                # Temporary files
+├── Dockerfile
+├── requirements.txt
+└── main.py
 ```
 
-## Setup
+## Quick Start
 
-1. **Create virtual environment:**
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+### Local Development
 
-2. **Install dependencies:**
+1. **Install dependencies**:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. **Configure environment:**
+2. **Run the server**:
 ```bash
-cp .env.example .env
-# Edit .env with your settings
+python main.py
+# or
+uvicorn app.main:app --reload
 ```
 
-4. **Run development server:**
+3. **Access API**:
+- API: http://localhost:8000
+- Docs: http://localhost:8000/api/docs
+- Health: http://localhost:8000/api/v1/health
+
+### Docker
+
 ```bash
-python run.py
+# Build
+docker build -t pixci-backend .
+
+# Run
+docker run -p 8000:8000 pixci-backend
 ```
-
-Server will start at `http://localhost:8000`
-
-## API Documentation
-
-- Swagger UI: `http://localhost:8000/api/docs`
-- ReDoc: `http://localhost:8000/api/redoc`
-- OpenAPI JSON: `http://localhost:8000/api/openapi.json`
 
 ## API Endpoints
 
@@ -87,9 +76,15 @@ POST /api/v1/encode
 Content-Type: multipart/form-data
 
 Parameters:
-- file: Image file (PNG, JPG, GIF)
-- block_size: int (1-16, default: 1)
-- auto_detect: bool (default: false)
+- file: Image file (PNG, JPG, GIF, WebP)
+- block_size: int (default: 1)
+- auto_detect: bool (default: true)
+
+Response:
+{
+  "pxvg_code": "<pxvg>...</pxvg>",
+  "message": "Encoded successfully"
+}
 ```
 
 ### Decode PXVG to Image
@@ -100,51 +95,62 @@ Content-Type: application/json
 Body:
 {
   "pxvg_code": "<pxvg>...</pxvg>",
-  "scale": 10
+  "scale": 1
+}
+
+Response:
+{
+  "image_base64": "data:image/png;base64,...",
+  "message": "Decoded successfully"
 }
 ```
 
-## Configuration
-
-Environment variables (`.env`):
+## Environment Variables
 
 ```env
-# Server
 HOST=0.0.0.0
 PORT=8000
-DEBUG=True
-
-# CORS
-CORS_ORIGINS=http://localhost:3000
-
-# Upload
-MAX_UPLOAD_SIZE=10485760  # 10MB
-ALLOWED_EXTENSIONS=png,jpg,jpeg,gif
-
-# Processing
+DEBUG=false
+CORS_ORIGINS=https://your-frontend.vercel.app
+MAX_UPLOAD_SIZE=10485760
 MAX_IMAGE_DIMENSION=512
 ```
 
+## Deployment
+
+See [DEPLOY.md](./DEPLOY.md) for detailed deployment instructions.
+
+Quick deploy to Render:
+1. Push to GitHub
+2. Connect to Render
+3. Deploy with `render.yaml`
+
 ## Development
 
-Run with auto-reload:
-```bash
-python run.py
-```
-
-Run tests:
+### Run Tests
 ```bash
 pytest
 ```
 
-## Production Deployment
-
+### Format Code
 ```bash
-gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker
+black .
 ```
 
-Or with Docker:
+### Lint
 ```bash
-docker build -t pixci-backend .
-docker run -p 8000:8000 pixci-backend
+flake8 .
 ```
+
+## Tech Stack
+
+- **FastAPI**: Modern web framework
+- **Uvicorn**: ASGI server
+- **Pillow**: Image processing
+- **OpenCV**: Computer vision
+- **scikit-image**: Image analysis
+- **NumPy/SciPy**: Numerical computing
+
+## License
+
+MIT

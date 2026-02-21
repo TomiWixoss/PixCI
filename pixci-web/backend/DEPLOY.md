@@ -4,9 +4,23 @@
 - GitHub account
 - Render account (free tier available)
 
+## Project Structure
+
+The backend is now self-contained with the `pixci` module included:
+```
+pixci-web/backend/
+├── app/                  # FastAPI application
+├── pixci/               # Core pixci module (copied from root)
+├── Dockerfile
+├── render.yaml
+├── requirements.txt
+└── main.py
+```
+
 ## Deployment Steps
 
 ### 1. Push to GitHub
+
 ```bash
 cd pixci-web/backend
 git init
@@ -33,7 +47,7 @@ git push -u origin main
    - **Name**: pixci-backend
    - **Region**: Singapore (or closest to you)
    - **Branch**: main
-   - **Root Directory**: backend
+   - **Root Directory**: Leave empty or set to `pixci-web/backend`
    - **Runtime**: Docker
    - **Plan**: Free
 5. Add Environment Variables:
@@ -48,15 +62,34 @@ git push -u origin main
 6. Click "Create Web Service"
 
 ### 3. Get Your Backend URL
+
 After deployment, you'll get a URL like:
 ```
 https://pixci-backend.onrender.com
 ```
 
 ### 4. Update Frontend Environment
+
 Update your frontend `.env.local`:
 ```env
 NEXT_PUBLIC_API_URL=https://pixci-backend.onrender.com/api/v1
+```
+
+## Local Testing
+
+Test the Docker build locally before deploying:
+
+```bash
+cd pixci-web/backend
+
+# Build
+docker build -t pixci-backend .
+
+# Run
+docker run -p 8000:8000 -e DEBUG=true pixci-backend
+
+# Test
+curl http://localhost:8000/api/v1/health
 ```
 
 ## Important Notes
@@ -115,7 +148,13 @@ Render provides:
 - Include your frontend URL
 - Redeploy after changes
 
+### Module Not Found
+- Ensure `pixci` folder is in the backend directory
+- Check PYTHONPATH: `ENV PYTHONPATH=/app`
+- Verify folder structure
+
 ## CI/CD
+
 Render automatically deploys when you push to GitHub:
 ```bash
 git add .
@@ -130,8 +169,15 @@ Render will:
 4. Zero-downtime deployment
 
 ## Rollback
+
 If deployment fails:
 1. Go to service settings
 2. Click "Deploys" tab
 3. Find previous successful deploy
 4. Click "Rollback"
+
+## Support
+
+- **Render Docs**: https://render.com/docs
+- **FastAPI Docs**: https://fastapi.tiangolo.com/
+- **Docker Docs**: https://docs.docker.com/
