@@ -71,8 +71,6 @@ Sử dụng như một thẻ đơn độc lập bên trong layer hoặc frame `<
 - **`<flip-x>`**, **`<flip-y>`**: Lật ảnh.
 - **`<mirror-x>`**, **`<mirror-y>`**: Sao chép nửa bức vẽ và tạo ảnh phản chiếu qua tâm gương tạc nắn đối xứng (rất đỉnh cho tạo hình body).
 
-
-
 ## Hậu Kỳ (Post-processing)
 Áp dụng lên toàn bộ Canvas sau khi tất cả các layer đã được rải điểm. Bắt buộc đặt bên trong container `<postprocess>` ở **cuối file**. Đối với animation, hậu kỳ sẽ được áp dụng riêng biệt lên *từng frame* trước khi ghép lại thành Spritesheet.
 - **`<outline>`**: Viền tự động.
