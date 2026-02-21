@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
 import { EncodeTab } from '@/components/features/EncodeTab'
 import { DecodeTab } from '@/components/features/DecodeTab'
+import { AIEditTab } from '@/components/features/AIEditTab'
 import { useAppStore } from '@/lib/store/useAppStore'
-import { Image as ImageIcon, Code, Github } from 'lucide-react'
+import { Image as ImageIcon, Code, Sparkles, Github } from 'lucide-react'
 
 export default function Home() {
   const { activeTab, setActiveTab } = useAppStore()
@@ -71,13 +71,29 @@ export default function Home() {
                 <Code className="h-5 w-5" />
                 Decode (PXVG → Ảnh)
               </button>
+              <button
+                onClick={() => setActiveTab('ai-edit')}
+                className={`
+                  flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                  ${
+                    activeTab === 'ai-edit'
+                      ? 'border-purple-500 text-purple-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }
+                `}
+              >
+                <Sparkles className="h-5 w-5" />
+                AI Edit (Chỉnh sửa bằng AI)
+              </button>
             </nav>
           </div>
         </div>
 
         {/* Tab Content */}
         <div className="animate-fadeIn">
-          {activeTab === 'encode' ? <EncodeTab /> : <DecodeTab />}
+          {activeTab === 'encode' && <EncodeTab />}
+          {activeTab === 'decode' && <DecodeTab />}
+          {activeTab === 'ai-edit' && <AIEditTab />}
         </div>
       </main>
 

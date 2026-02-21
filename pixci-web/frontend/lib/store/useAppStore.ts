@@ -19,8 +19,8 @@ interface AppState {
   setCurrentImage: (image: string | null) => void
 
   // UI state
-  activeTab: 'encode' | 'decode'
-  setActiveTab: (tab: 'encode' | 'decode') => void
+  activeTab: 'encode' | 'decode' | 'ai-edit'
+  setActiveTab: (tab: 'encode' | 'decode' | 'ai-edit') => void
 }
 
 export const useAppStore = create<AppState>()(
