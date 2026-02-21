@@ -161,27 +161,7 @@ class GeometryMixin(BaseCanvas):
                 self.set_pixel(pt, color)
                 prev_point = pt
 
-    def draw_arc(self, center: Tuple[int, int], radius: int, start_angle: float, end_angle: float, color: str):
-        """Draw an arc (portion of a circle). Angles in degrees, 0=right, 90=down.
-        
-        Example - top half of a dome:
-            canvas.draw_arc((16, 16), 10, 180, 360, "R1")
-        """
-        import math
-        start_rad = math.radians(start_angle)
-        end_rad = math.radians(end_angle)
-        
-        steps = int(abs(end_angle - start_angle) * radius / 20) + 20
-        prev_point = None
-        for i in range(steps + 1):
-            t = i / steps
-            angle = start_rad + t * (end_rad - start_rad)
-            x = int(round(center[0] + radius * math.cos(angle)))
-            y = int(round(center[1] + radius * math.sin(angle)))
-            pt = (x, y)
-            if pt != prev_point:
-                self.set_pixel(pt, color)
-                prev_point = pt
+
 
     def fill_rect(self, top_left: Tuple[int, int], bottom_right: Tuple[int, int], color: str):
         x0, y0 = top_left
@@ -229,56 +209,84 @@ class GeometryMixin(BaseCanvas):
     def draw_circle(self, center: Tuple[int, int], radius: int, color: str, pixel_perfect: bool = False):
         self.draw_ellipse(center, radius, radius, color, pixel_perfect)
 
-    def fill_ellipse(self, center: Tuple[int, int], rx: int, ry: int, color: str):
-        xc, yc = center
-        for x in range(xc - rx, xc + rx + 1):
-            for y in range(yc - ry, yc + ry + 1):
-                dx = x - xc
-                dy = y - yc
-                if (dx * dx) / max(rx * rx, 1) + (dy * dy) / max(ry * ry, 1) <= 1.0:
-                    self.set_pixel((x, y), color)
-
-    def draw_ellipse(self, center: Tuple[int, int], rx: int, ry: int, color: str, pixel_perfect: bool = False):
-        xc, yc = center
+    def _get_ellipse_quadrant(self, rx: int, ry: int) -> List[Tuple[int, int]]:
+        if rx == 0 and ry == 0:
+            return [(0,0)]
+        pts = []
         x = 0
         y = ry
         d1 = (ry * ry) - (rx * rx * ry) + (0.25 * rx * rx)
         dx = 2 * ry * ry * x
         dy = 2 * rx * rx * y
-
         while dx < dy:
-            self.set_pixel((xc + x, yc + y), color)
-            self.set_pixel((xc - x, yc + y), color)
-            self.set_pixel((xc + x, yc - y), color)
-            self.set_pixel((xc - x, yc - y), color)
+            pts.append((x, y))
             if d1 < 0:
                 x += 1
-                dx = dx + (2 * ry * ry)
-                d1 = d1 + dx + (ry * ry)
+                dx += 2 * ry * ry
+                d1 += dx + ry * ry
             else:
                 x += 1
                 y -= 1
-                dx = dx + (2 * ry * ry)
-                dy = dy - (2 * rx * rx)
-                d1 = d1 + dx - dy + (ry * ry)
-
-        d2 = ((ry * ry) * ((x + 0.5) * (x + 0.5))) + ((rx * rx) * ((y - 1) * (y - 1))) - (rx * rx * ry * ry)
-
+                dx += 2 * ry * ry
+                dy -= 2 * rx * rx
+                d1 += dx - dy + ry * ry
+                
+        pts2 = []
+        d2 = (ry * ry) * ((x + 0.5) * (x + 0.5)) + (rx * rx) * ((y - 1) * (y - 1)) - (rx * rx * ry * ry)
         while y >= 0:
+            pts2.append((x, y))
+            if d2 > 0:
+                y -= 1
+                dy -= 2 * rx * rx
+                d2 += rx * rx - dy
+            else:
+                y -= 1
+                x += 1
+                dx += 2 * ry * ry
+                dy -= 2 * rx * rx
+                d2 += dx - dy + rx * rx
+                
+        return pts + pts2
+
+    def fill_ellipse(self, center: Tuple[int, int], rx: int, ry: int, color: str):
+        xc, yc = center
+        q = self._get_ellipse_quadrant(rx, ry)
+        y_to_maxx = {}
+        for x, y in q:
+            if y not in y_to_maxx or x > y_to_maxx[y]:
+                y_to_maxx[y] = x
+                
+        for y, max_x in y_to_maxx.items():
+            for x in range(-max_x, max_x + 1):
+                self.set_pixel((xc + x, yc + y), color)
+                if y != 0:
+                    self.set_pixel((xc + x, yc - y), color)
+
+    def draw_ellipse(self, center: Tuple[int, int], rx: int, ry: int, color: str, pixel_perfect: bool = False):
+        xc, yc = center
+        q = self._get_ellipse_quadrant(rx, ry)
+        
+        if pixel_perfect and len(q) > 2:
+            clean_q = [q[0]]
+            for i in range(1, len(q)-1):
+                prev = clean_q[-1]
+                curr = q[i]
+                nxt = q[i+1]
+                dx1, dy1 = curr[0]-prev[0], curr[1]-prev[1]
+                dx2, dy2 = nxt[0]-curr[0], nxt[1]-curr[1]
+                if (abs(dx1) == 1 and dy1 == 0 and dx2 == 0 and abs(dy2) == 1) or \
+                   (dx1 == 0 and abs(dy1) == 1 and abs(dx2) == 1 and dy2 == 0):
+                    continue
+                clean_q.append(curr)
+            clean_q.append(q[-1])
+            q = clean_q
+
+        # Add all 4 quadrants
+        for x, y in q:
             self.set_pixel((xc + x, yc + y), color)
             self.set_pixel((xc - x, yc + y), color)
             self.set_pixel((xc + x, yc - y), color)
             self.set_pixel((xc - x, yc - y), color)
-            if d2 > 0:
-                y -= 1
-                dy = dy - (2 * rx * rx)
-                d2 = d2 + (rx * rx) - dy
-            else:
-                y -= 1
-                x += 1
-                dx = dx + (2 * ry * ry)
-                dy = dy - (2 * rx * rx)
-                d2 = d2 + dx - dy + (rx * rx)
 
     # =================================================================
     # ANCHOR-BASED DRAWING - AI vẽ bằng điểm neo thay vì toạ độ thô
