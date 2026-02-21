@@ -41,9 +41,14 @@ class PixCIGUI(tk.Tk):
         self.run_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.run_frame, text="Run Script (Py -> Ảnh)")
         
+        # Tab 4: Quick Run (Paste & Run)
+        self.quick_run_frame = ttk.Frame(self.notebook)
+        self.notebook.add(self.quick_run_frame, text="Quick Run (Dán & Xem ngay)")
+
         self.setup_encode_tab()
         self.setup_decode_tab()
         self.setup_run_tab()
+        self.setup_quick_run_tab()
 
     def setup_encode_tab(self):
         # Input
@@ -106,6 +111,28 @@ class PixCIGUI(tk.Tk):
         
         # Run Button
         ttk.Button(self.run_frame, text="Chạy Script", command=self.do_run).grid(row=2, column=1, pady=20)
+
+    def setup_quick_run_tab(self):
+        # Text input
+        ttk.Label(self.quick_run_frame, text="Dán nội dung PXVG XML / Mã Grid / Python Py vào đây:").pack(anchor="w", padx=5, pady=5)
+        self.qr_text = tk.Text(self.quick_run_frame, height=18, width=70)
+        self.qr_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Bottom controls
+        bottom_frame = ttk.Frame(self.quick_run_frame)
+        bottom_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        ttk.Label(bottom_frame, text="Scale:").pack(side=tk.LEFT, padx=5)
+        self.qr_scale_var = tk.IntVar(value=10)
+        ttk.Spinbox(bottom_frame, from_=1, to=20, textvariable=self.qr_scale_var, width=5).pack(side=tk.LEFT, padx=5)
+        
+        ttk.Label(bottom_frame, text="Lưu output tại:").pack(side=tk.LEFT, padx=5)
+        self.qr_output_var = tk.StringVar(value=os.path.join(os.getcwd(), "quick_renders"))
+        ttk.Entry(bottom_frame, textvariable=self.qr_output_var, width=25).pack(side=tk.LEFT, padx=5)
+        ttk.Button(bottom_frame, text="Browse...", command=lambda: self.browse_dir(self.qr_output_var)).pack(side=tk.LEFT, padx=5)
+        
+        # Run Button
+        ttk.Button(bottom_frame, text="🚀 CHẠY NGAY (RENDER)", command=self.do_quick_run).pack(side=tk.RIGHT, padx=5)
 
     def browse_file(self, string_var, filetypes):
         filename = filedialog.askopenfilename(filetypes=filetypes)
@@ -217,6 +244,77 @@ class PixCIGUI(tk.Tk):
         except Exception as e:
             traceback.print_exc()
             messagebox.showerror("Lỗi Thực thi", str(e))
+
+    def do_quick_run(self):
+        content = self.qr_text.get("1.0", tk.END).strip()
+        if not content:
+            messagebox.showwarning("Thiếu nội dung", "Vui lòng dán code hoặc pxvg/grid text vào ô.")
+            return
+            
+        out_dir = Path(self.qr_output_var.get())
+        out_dir.mkdir(parents=True, exist_ok=True)
+        scale = self.qr_scale_var.get()
+        
+        try:
+            target_to_open = None
+            msg = ""
+            
+            # Detect format based on content
+            if "<pxvg" in content or "<?xml" in content:
+                temp_file = out_dir / "temp_quick.pxvg.xml"
+                temp_file.write_text(content, encoding="utf-8")
+                out_png = out_dir / "temp_quick.png"
+                w, h = decode_pxvg(temp_file, out_png, scale)
+                msg = f"Đã render PXVG thành công ({w}x{h})!"
+                target_to_open = out_png
+                
+            elif "import pixci" in content or "Canvas(" in content:
+                temp_file = out_dir / "temp_quick.py"
+                temp_file.write_text(content, encoding="utf-8")
+                
+                env = os.environ.copy()
+                current_dir = os.getcwd()
+                if "PYTHONPATH" in env:
+                    env["PYTHONPATH"] = f"{current_dir}{os.pathsep}{env['PYTHONPATH']}"
+                else:
+                    env["PYTHONPATH"] = current_dir
+                if scale > 1:
+                    env["PIXCI_SCALE"] = str(scale)
+                    
+                result = subprocess.run([sys.executable, str(temp_file)], env=env, capture_output=True, text=True, cwd=out_dir)
+                if result.returncode != 0:
+                    messagebox.showerror("Lỗi khi chạy Script Python", result.stderr)
+                    return
+                    
+                # Find latest generated PNG or GIF
+                media_files = list(out_dir.glob("*.png")) + list(out_dir.glob("*.gif"))
+                if media_files:
+                    target_to_open = max(media_files, key=os.path.getmtime)
+                msg = f"Đã chạy Python script thành công!\n\nConsole Output:\n{result.stdout}"
+                
+            else:
+                # Fallback to Text/Grid format
+                temp_file = out_dir / "temp_quick.txt"
+                temp_file.write_text(content, encoding="utf-8")
+                out_png = out_dir / "temp_quick.png"
+                w, h = decode_text(temp_file, out_png, scale)
+                msg = f"Đã render Text/Grid thành công ({w}x{h})!"
+                target_to_open = out_png
+                
+            if target_to_open and target_to_open.exists():
+                messagebox.showinfo("Thành công", f"{msg}\n\nĐã lưu ảnh tại: {target_to_open}\nĐang mở ảnh...")
+                if sys.platform == "win32":
+                    os.startfile(target_to_open)
+                elif sys.platform == "darwin":
+                    subprocess.call(["open", target_to_open])
+                else:
+                    subprocess.call(["xdg-open", target_to_open])
+            else:
+                messagebox.showinfo("Thành công", msg)
+                
+        except Exception as e:
+            traceback.print_exc()
+            messagebox.showerror("Lỗi Quick Run", str(e))
 
 if __name__ == "__main__":
     app = PixCIGUI()
