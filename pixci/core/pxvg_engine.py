@@ -62,13 +62,15 @@ def _parse_drawing_tags(canvas: Canvas, parent_element: ET.Element, strip_ns):
             start = tuple(map(int, attr.get('start', '0,0').split(',')))
             ctrl = tuple(map(int, attr.get('ctrl', '0,0').split(',')))
             end = tuple(map(int, attr.get('end', '0,0').split(',')))
-            canvas.draw_curve(start, ctrl, end, c)
+            thickness = int(attr.get('thickness', attr.get('t', 1)))
+            canvas.draw_curve(start, ctrl, end, c, thickness=thickness)
         elif stag == 'cubic-curve':
             p0 = tuple(map(int, attr.get('p0', '0,0').split(',')))
             p1 = tuple(map(int, attr.get('p1', '0,0').split(',')))
             p2 = tuple(map(int, attr.get('p2', '0,0').split(',')))
             p3 = tuple(map(int, attr.get('p3', '0,0').split(',')))
-            canvas.draw_cubic_curve(p0, p1, p2, p3, c)
+            thickness = int(attr.get('thickness', attr.get('t', 1)))
+            canvas.draw_cubic_curve(p0, p1, p2, p3, c, thickness=thickness)
         elif stag == 'bucket':
             x = int(attr.get('x', 0))
             y = int(attr.get('y', 0))
@@ -120,7 +122,26 @@ def _parse_drawing_tags(canvas: Canvas, parent_element: ET.Element, strip_ns):
             y1 = int(attr.get('y1', 0))
             x2 = int(attr.get('x2', 0))
             y2 = int(attr.get('y2', 0))
-            canvas.draw_line((x1, y1), (x2, y2), c)
+            thickness = int(attr.get('thickness', attr.get('t', 1)))
+            canvas.draw_line((x1, y1), (x2, y2), c, thickness=thickness)
+        elif stag == 'gradient':
+            x = int(attr.get('x', 0))
+            y = int(attr.get('y', 0))
+            w = int(attr.get('w', 1))
+            h = int(attr.get('h', 1))
+            mode = attr.get('mode', 'vertical')
+            pal_str = attr.get('palette', c)
+            pal = pal_str.split(',') if ',' in pal_str else [pal_str]
+            canvas.fill_gradient((x, y, x + w - 1, y + h - 1), pal, mode=mode)
+        elif stag == 'noise':
+            x = int(attr.get('x', 0))
+            y = int(attr.get('y', 0))
+            w = int(attr.get('w', 1))
+            h = int(attr.get('h', 1))
+            density = float(attr.get('density', 0.5))
+            pal_str = attr.get('palette', c)
+            pal = pal_str.split(',') if ',' in pal_str else [pal_str]
+            canvas.fill_noise((x, y, x + w - 1, y + h - 1), pal, density=density)
 
 
 def decode_pxvg(text_path: Path, output_path: Path, scale: int = 1) -> Tuple[int, int]:

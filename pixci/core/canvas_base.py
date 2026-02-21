@@ -144,8 +144,11 @@ class BaseCanvas:
         return flat
 
     def _get_color(self, char_or_color: Union[str, Tuple[int, int, int, int]]) -> Tuple[int, int, int, int]:
-        if isinstance(char_or_color, str) and char_or_color in self.palette:
-            return self.palette[char_or_color]
+        if isinstance(char_or_color, str):
+            if char_or_color.upper() == "CLEAR":
+                return (0, 0, 0, 0)
+            if char_or_color in self.palette:
+                return self.palette[char_or_color]
         if isinstance(char_or_color, tuple) and len(char_or_color) == 4:
             return char_or_color
         if isinstance(char_or_color, str) and char_or_color.startswith("#"):

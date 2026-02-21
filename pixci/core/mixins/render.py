@@ -106,4 +106,40 @@ class RenderMixin(BaseCanvas):
                     color = palette
                 self.set_pixel((x, y), color)
 
+    def fill_gradient(self, rect: Tuple[int, int, int, int], palette: List[str], mode: str = "vertical"):
+        """Fill a rectangle with a linear gradient.
+        Modes: 'vertical', 'horizontal', 'diagonal_down', 'diagonal_up'
+        """
+        x0, y0, x1, y1 = rect
+        min_x, max_x = min(x0, x1), max(x0, x1)
+        min_y, max_y = min(y0, y1), max(y0, y1)
+        w = max_x - min_x
+        h = max_y - min_y
+        for x in range(min_x, max_x + 1):
+            for y in range(min_y, max_y + 1):
+                t = 0.0
+                if mode == "vertical":
+                    t = (y - min_y) / max(1, h)
+                elif mode == "horizontal":
+                    t = (x - min_x) / max(1, w)
+                elif mode == "diagonal_down":
+                    t = ((x - min_x) / max(1, w) + (y - min_y) / max(1, h)) / 2
+                elif mode == "diagonal_up":
+                    t = ((x - min_x) / max(1, w) + (max_y - y) / max(1, h)) / 2
+                    
+                idx = int(t * (len(palette) - 1))
+                idx = max(0, min(len(palette) - 1, idx))
+                self.set_pixel((x, y), palette[idx])
 
+    def fill_noise(self, rect: Tuple[int, int, int, int], palette: List[str], density: float = 0.5, seed: int = 42):
+        """Fill a rectangle with random noise pixels, useful for textures.
+        Use with alpha_lock=True to add texture without breaking silhouettes.
+        """
+        import random
+        rng = random.Random(seed)
+        x0, y0, x1, y1 = rect
+        for x in range(min(x0, x1), max(x0, x1) + 1):
+            for y in range(min(y0, y1), max(y0, y1) + 1):
+                if rng.random() < density:
+                    color = rng.choice(palette)
+                    self.set_pixel((x, y), color)

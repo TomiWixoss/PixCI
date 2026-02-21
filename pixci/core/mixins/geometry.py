@@ -2,7 +2,13 @@ from typing import Tuple, List, Union
 from ..canvas_base import BaseCanvas
 
 class GeometryMixin(BaseCanvas):
-    def draw_line(self, start_pos: Tuple[int, int], end_pos: Tuple[int, int], color: str):
+    def _draw_thick_point(self, pos: Tuple[int, int], color: str, thickness: int = 1):
+        if thickness <= 1:
+            self.set_pixel(pos, color)
+        else:
+            self.fill_circle(pos, thickness // 2, color)
+
+    def draw_line(self, start_pos: Tuple[int, int], end_pos: Tuple[int, int], color: str, thickness: int = 1):
         """Bresenham line from start_pos to end_pos."""
         x0, y0 = start_pos
         x1, y1 = end_pos
@@ -13,7 +19,7 @@ class GeometryMixin(BaseCanvas):
         err = dx - dy
 
         while True:
-            self.set_pixel((x0, y0), color)
+            self._draw_thick_point((x0, y0), color, thickness)
             if x0 == x1 and y0 == y1:
                 break
             e2 = 2 * err
@@ -44,18 +50,18 @@ class GeometryMixin(BaseCanvas):
             for x in range(x_start, x_end + 1):
                 self.set_pixel((x, y), color)
 
-    def draw_polyline(self, points: List[Tuple[int, int]], color: str, closed: bool = False):
+    def draw_polyline(self, points: List[Tuple[int, int]], color: str, closed: bool = False, thickness: int = 1):
         """Draw connected line segments through a series of points.
         If closed=True, also connects the last point back to the first.
         """
         if len(points) < 2:
             if len(points) == 1:
-                self.set_pixel(points[0], color)
+                self._draw_thick_point(points[0], color, thickness)
             return
         for i in range(len(points) - 1):
-            self.draw_line(points[i], points[i + 1], color)
+            self.draw_line(points[i], points[i + 1], color, thickness)
         if closed:
-            self.draw_line(points[-1], points[0], color)
+            self.draw_line(points[-1], points[0], color, thickness)
 
     def fill_polygon(self, points: List[Tuple[int, int]], color: str):
         """Fill an arbitrary polygon defined by vertex points.
@@ -104,7 +110,7 @@ class GeometryMixin(BaseCanvas):
                 for x in range(x_start, x_end + 1):
                     self.set_pixel((x, y), color)
 
-    def draw_curve(self, start_pos: Tuple[int, int], control_pos: Tuple[int, int], end_pos: Tuple[int, int], color: str, pixel_perfect: bool = True):
+    def draw_curve(self, start_pos: Tuple[int, int], control_pos: Tuple[int, int], end_pos: Tuple[int, int], color: str, pixel_perfect: bool = True, thickness: int = 1):
         """Quadratic Bezier curve with optional pixel-perfect cleanup."""
         pts = []
         x0, y0 = start_pos
@@ -140,9 +146,9 @@ class GeometryMixin(BaseCanvas):
             unique_pts = clean
             
         for p in unique_pts:
-            self.set_pixel(p, color)
+            self._draw_thick_point(p, color, thickness)
 
-    def draw_cubic_curve(self, p0: Tuple[int, int], p1: Tuple[int, int], p2: Tuple[int, int], p3: Tuple[int, int], color: str):
+    def draw_cubic_curve(self, p0: Tuple[int, int], p1: Tuple[int, int], p2: Tuple[int, int], p3: Tuple[int, int], color: str, thickness: int = 1):
         """Cubic Bezier curve (4 control points) for smoother curves like S-shapes."""
         x0, y0 = p0
         x1, y1 = p1
@@ -158,7 +164,7 @@ class GeometryMixin(BaseCanvas):
             y = nt**3 * y0 + 3 * nt**2 * t * y1 + 3 * nt * t**2 * y2 + t**3 * y3
             pt = (int(round(x)), int(round(y)))
             if pt != prev_point:
-                self.set_pixel(pt, color)
+                self._draw_thick_point(pt, color, thickness)
                 prev_point = pt
 
 

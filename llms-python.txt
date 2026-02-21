@@ -48,23 +48,34 @@ Quy hoạch hình từ xa tới gần.
 - `canvas.merge_all()`
 - `snap = canvas.snapshot()` / `canvas.restore_snapshot(snap)`: Lưu và Khôi phục layer state hiện tại (Undo).
 
-## 5. Vẽ Hình Học Cơ Bản (Primitives)
-Luôn truyền tên mã màu (Ví dụ: "R1").
+## 5. Vẽ Hình Học Cơ Bản & Chế Độ Tẩy (Eraser Mode)
+**Mẹo Nhấn Mạnh:** Truyền truyền tên mã màu (Ví dụ: "R1"). Nếu truyền chuỗi `"CLEAR"` vào màu sắc, lệnh vẽ đó sẽ ngay lập tức biến thành **cục Tẩy (Eraser)**, đục lẹm layer hiện tại thành trong suốt xuyên thấu để tạo các hình khoét hữu cơ (Mặt trăng khuyết, Mắt rỗng).
+
 - `canvas.set_pixel((x, y), "color")`
-- `canvas.draw_line((x0,y0), (x1,y1), "color")`
-- `canvas.draw_polyline([(x,y)...], "color", closed=True/False)`
-- `canvas.draw_curve(start, control, end, "color")` / `draw_cubic_curve(p0, p1, p2, p3, "color")` (Pixel-perfect Curves)
+- `canvas.draw_line((x0,y0), (x1,y1), "color", thickness=1)`
+- `canvas.draw_polyline([(x,y)...], "color", closed=True/False, thickness=1)`
+- `canvas.draw_curve(start, control, end, "color", thickness=1)` / `draw_cubic_curve(p0, p1, p2, p3, "color", thickness=1)` (Pixel-perfect Curves)
 - `canvas.fill_rect((x0,y0), (x1,y1), "color")` / `fill_rounded_rect((x0,y0), (x1,y1), radius, "color")`
 - `canvas.fill_circle((cx, cy), radius, "color")` / `draw_circle((cx, cy), radius, "color", pixel_perfect=True)`
 - `canvas.fill_ellipse((cx, cy), rx, ry, "color")` / `draw_ellipse((cx, cy), rx, ry, "color", pixel_perfect=True)`
 - `canvas.fill_polygon([(x1,y1), (x2,y2)...], "color")`
+- `canvas.fill_gradient((x0,y0,x1,y1), ["dark", "mid", "light"], mode="vertical")`: (Modes: 'vertical', 'horizontal', 'diagonal_down', 'diagonal_up')
+- `canvas.fill_noise((x0,y0,x1,y1), ["c1", "c2"], density=0.5)`
 - `canvas.draw_rows([(y, x_start, x_end, "color"), ...])`: Siêu nén, vẽ nhiều dòng dải ngang ngang 1 lúc (dùng tạo hình).
 
 ## 6. Vẽ Hình Ngữ Nghĩa & Khối Neo (Semantic Shapes)
-Cách tốt nhất để tự động vẽ mà không cần căn tọa độ phức tạp.
+Cách tốt nhất để chặn block hình khối chung cho nhân vật mà không cần căn tọa độ phức tạp.
 - `canvas.fill_rect_centered((cx, cy), w, h, "color")`
 - `canvas.fill_ellipse_anchored((ax, ay), rx, ry, "color", align="bottom")` (align: "center", "bottom", "top")
 - `canvas.fill_rect_anchored((ax, ay), w, h, "color", align="bottom_left")` (align: "center", "bottom", "top", "bottom_left", "bottom_right")
+
+> **🚀 Tư Duy Điêu Khắc (Sculpting Workflow) cho AI:**
+> Thay vì chấm từng điểm pixel tốn thời gian, AI nên tạo hình theo tư duy Điêu Khắc Đất Sét: 
+> 1. Dùng các thẻ Block Neo (Neo thân hình bằng `fill_rect_anchored` / `ellipse_anchored` to đùng ngã ngửa).
+> 2. Đổi color thành `"CLEAR"` -> đục lấy lại các góc bo cho hợp lý, vát chéo vai, tai, mảng bị thương... 
+> 3. Bật khóa `canvas.alpha_lock = True`.
+> 4. Phủ bóng đổ Bóng/Sáng bằng `fill_gradient`, `fill_noise` hay rải Line lên mà KHÔNG SỢ LEM màu trong suốt.
+> 5. Chạy Postprocess (`cleanup_jaggies`, `add_outline`). Xong! Tạo kiệt tác không cần nhúng não!
 
 
 ## 7. Biến đổi & Chỉnh Sửa (Transform)

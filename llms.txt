@@ -30,6 +30,7 @@ Các đối tượng đồ họa được phân rã theo lớp để quản lý 
 ```
 
 ## Các Thẻ Hình Học Cơ Bản (Primitives)
+*Mẹo Nhấn Mạnh:* Truyền `c="CLEAR"` vào BẤT KỲ thẻ nào dưới đây sẽ biến thẻ đó thành một **cục tẩy (Eraser)**, lập tức đục lẹm layer hiện tại thành trong suốt thay vì tô màu.
 Các thẻ dùng để đổ màu lên ma trận điểm ảnh với tọa độ bắt buộc là **số nguyên (Integer)**.
 - **`<rect>`**: Hình chữ nhật đặc.
   *Thuộc tính:* `x`, `y` (tọa độ góc trái trên), `w` (rộng), `h` (cao), `c` (mã màu).
@@ -40,7 +41,7 @@ Các thẻ dùng để đổ màu lên ma trận điểm ảnh với tọa độ
 - **`<dots>`**: Tập hợp nhiều điểm ảnh đơn lẻ dùng chung một màu (siêu nén).
   *Thuộc tính:* `c` (mã màu), `pts` (chuỗi tọa độ "x,y x,y...").
 - **`<line>`**: Đường thẳng vẽ bằng thuật toán Bresenham.
-  *Thuộc tính:* `x1`, `y1` (Bắt đầu), `x2`, `y2` (Kết thúc), `c` (mã màu).
+  *Thuộc tính:* `x1`, `y1` (Bắt đầu), `x2`, `y2` (Kết thúc), `thickness` (Hoặc `t="2"` độ dày nét), `c` (mã màu).
 - **`<circle>`**: Hình tròn (thuật toán midpoint nén gai).
   *Thuộc tính:* `cx`, `cy` (tâm), `r` (bán kính), `fill` ("true"/"false"), `c` (mã màu).
 - **`<ellipse>`**: Hình bầu dục tỷ lệ vàng.
@@ -50,13 +51,17 @@ Các thẻ dùng để đổ màu lên ma trận điểm ảnh với tọa độ
 - **`<polygon>`**: Đa giác đặc.
   *Thuộc tính:* `pts` (chuỗi điểm "x,y x,y..."), `c` (mã màu).
 - **`<curve>`**: Đường cong Bezier 3 điểm (pixel perfect).
-  *Thuộc tính:* `start` ("x,y"), `ctrl` ("x,y"), `end` ("x,y"), `c` (mã màu).
+  *Thuộc tính:* `start` ("x,y"), `ctrl` ("x,y"), `end` ("x,y"), `t` (độ dày nét), `c` (mã màu).
 - **`<cubic-curve>`**: Đường cong Bezier 4 điểm.
-  *Thuộc tính:* `p0`, `p1`, `p2`, `p3` (các tọa độ "x,y"), `c`.
+  *Thuộc tính:* `p0`, `p1`, `p2`, `p3` (các tọa độ "x,y"), `t` (độ dày nét), `c`.
 - **`<bucket>`**: Đổ thùng sơn lấp đầy khoảng trống kín.
   *Thuộc tính:* `x`, `y` (điểm mồi xuất phát), `c`.
 - **`<dither>`**: Trộn 2 màu đục lỗ (Checkered pattern) tạo độ chuyển vùng.
   *Thuộc tính:* `x`, `y`, `w`, `h`, `c` (màu chính 1), `c2` (màu xen kẽ 2), `pattern` ("checkered", "bayer"), `ratio` (nếu dùng bayer).
+- **`<gradient>`**: Phủ màu Gradient tuyến tính lên khu vực.
+  *Thuộc tính:* `x`, `y`, `w`, `h`, `mode` ("vertical", "horizontal", "diagonal_down", "diagonal_up"), `palette` ("color_key_1,color_key_2,...").
+- **`<noise>`**: Phủ các điểm sáng nhiễu hạt ngẫu nhiên (chỉ định vùng).
+  *Thuộc tính:* `x`, `y`, `w`, `h`, `density` (0.0 -> 1.0, vd "0.5"), `palette` ("c1,c2").
 
 ## Thao Tác Biến Theo Từng Lớp (Transform & Alpha)
 Sử dụng như một thẻ đơn độc lập bên trong layer hoặc frame `<layer>...<flip-x />...</layer>`
