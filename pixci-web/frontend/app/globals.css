@@ -1,20 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-  }
-
-  * {
-    @apply border-border;
-  }
-  
-  body {
-    @apply bg-background text-foreground;
-  }
+@theme {
+  --color-border: #e5e7eb;
+  --color-background: #ffffff;
+  --color-foreground: #111827;
 }
 
 @layer utilities {
