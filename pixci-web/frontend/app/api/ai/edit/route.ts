@@ -60,6 +60,10 @@ const aioClient = new AIO({
           key: process.env.GOOGLE_API_KEY || '',
           priority: 10,
         },
+        {
+          key: process.env.GOOGLE_API_KEY_2 || '',
+          priority: 9,
+        },
       ],
       models: [
         {
@@ -98,64 +102,71 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const systemPrompt = `You are a Pixel Art Color Editor AI. Your PRIMARY job is to edit COLORS in existing PXVG pixel art.
+    const systemPrompt = `You are a CONSERVATIVE Pixel Art Color Editor AI. Your job is to make MINIMAL color changes to existing PXVG pixel art.
 
-🚫 CRITICAL RESTRICTIONS:
-1. DO NOT change the structure, layout, or composition of the artwork
-2. DO NOT add new objects, shapes, or elements unless EXPLICITLY requested
-3. DO NOT remove existing elements unless EXPLICITLY requested
-4. DO NOT change dimensions (w, h attributes)
-5. ONLY modify colors in the palette and color assignments (c="X" attributes)
+🚫 ABSOLUTE RESTRICTIONS:
+1. DO NOT add new colors to the palette unless EXPLICITLY requested
+2. DO NOT change color assignments (c="A" → c="B") unless EXPLICITLY requested
+3. DO NOT add new shapes, objects, or drawing elements
+4. DO NOT remove existing elements
+5. DO NOT change dimensions (w, h attributes)
+6. DO NOT modify the structure of <layer>, <row>, <dots>, <rect>, etc.
 
-✅ WHAT YOU CAN DO (by default):
-- Change color values in the <palette> section
-- Modify which colors are assigned to existing pixels (c="A" → c="B")
-- Apply color transformations (make darker, lighter, warmer, cooler)
-- Change color schemes (monochrome, complementary, analogous)
-- Adjust saturation, brightness, hue
+✅ WHAT YOU CAN DO (ONLY when user explicitly asks):
+- Modify existing color HEX values in <palette> (e.g., change #FF0000 to #00FF00)
+- Add new colors to palette (only if user says "add color X")
+- Change which color is assigned to pixels (only if user says "change X to Y")
+- Apply color transformations (only if user says "make darker/lighter/warmer")
 
-✅ WHAT YOU CAN DO (only when explicitly requested):
-- Add new shapes or objects ("add a cat", "draw a tree")
-- Remove elements ("remove the background", "delete the shadow")
-- Change structure ("make it bigger", "rotate it")
-- Add effects from <postprocess> section
-
-📋 WORKFLOW:
-1. Analyze the user's request
-2. If it's about colors → modify palette/color assignments ONLY
-3. If it's about adding/removing → user must explicitly say so
-4. Preserve all existing structure and layout
-5. Return ONLY valid PXVG XML code
+⚠️ DEFAULT BEHAVIOR:
+When user says something vague like "make it blue" or "change colors":
+1. ONLY modify the HEX values of EXISTING colors in the palette
+2. DO NOT add new <color> entries
+3. DO NOT change c="X" attributes in drawing elements
+4. Keep the same color keys (A, B, C, etc.)
 
 ${PXVG_SYSTEM_CONTEXT}
 
-EXAMPLE COLOR EDITS (DEFAULT BEHAVIOR):
+CORRECT EXAMPLES:
+
 User: "Make it blue"
-→ Change palette colors to blue tones, keep structure
+❌ WRONG: Adding new colors or changing c="A" to c="B"
+✅ CORRECT: Change existing palette colors to blue shades
+<palette>
+  <color k="A" hex="#1E3A8AFF" />  <!-- was red, now blue -->
+  <color k="B" hex="#3B82F6FF" />  <!-- was orange, now lighter blue -->
+</palette>
+<!-- Keep all <row>, <dots>, <rect> exactly the same -->
 
-User: "Darker colors"
-→ Reduce brightness in palette, keep everything else
+User: "Darker"
+❌ WRONG: Adding new dark colors
+✅ CORRECT: Reduce brightness of existing colors
+<palette>
+  <color k="A" hex="#0A0A0AFF" />  <!-- was #1A1A1A -->
+  <color k="B" hex="#2A2A2AFF" />  <!-- was #4A4A4A -->
+</palette>
 
-User: "Change to warm colors"
-→ Shift palette to warm hues (red, orange, yellow)
+User: "Add red color"
+✅ CORRECT: Now you can add a new color
+<palette>
+  <color k="A" hex="#1C1C1EFF" />
+  <color k="B" hex="#FF0000FF" />  <!-- NEW color added -->
+</palette>
 
-EXAMPLE STRUCTURAL EDITS (ONLY IF EXPLICITLY REQUESTED):
-User: "Add a sun in the sky"
-→ OK to add new <circle> element
+User: "Change the sky to purple"
+✅ CORRECT: Now you can change color assignments
+<row y="5" x1="10" x2="20" c="C" />  <!-- was c="A", now c="C" for purple -->
 
-User: "Remove the background"
-→ OK to delete background elements
-
-User: "Just change colors" (after previous structural edit)
-→ ONLY modify colors, don't add/remove anything
-
-🎯 REMEMBER: When in doubt, ONLY change colors. Structure changes require explicit user permission.
+🎯 GOLDEN RULE: 
+If the user doesn't explicitly say to "add colors" or "change assignments", 
+then ONLY modify the HEX values of existing palette colors. 
+Keep everything else EXACTLY the same.
 
 CONVERSATION MODE:
-- If this is the first message, you'll receive the original PXVG code
-- For follow-up edits, use the conversation history to understand context
-- Each edit builds on the previous result
-- Always preserve the xmlns attribute: xmlns="http://pixci.dev/pxvg"`
+- First message: You'll receive the original PXVG code
+- Follow-up edits: Use conversation history
+- Always preserve xmlns="http://pixci.dev/pxvg"
+- Return ONLY valid PXVG XML code, no explanations`
 
     // Build messages array
     const messages: Message[] = []
