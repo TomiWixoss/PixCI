@@ -1,0 +1,26 @@
+<pxvg w="32" h="32" xmlns="http://pixci.dev/pxvg">
+  <palette>
+    <color k="C" hex="#55FFFFFF" /> <color k="E" hex="#00AAAAFF" /> <color k="G" hex="#006666FF" /> <color k="H" hex="#8B4513FF" /> </palette>
+
+  <layer id="minecraft_diamond_sword">
+    <dot x="22" y="9" c="E" />
+    
+    <dots c="C" pts="21,10 20,11 19,12 18,13 17,14 16,15 15,16 14,17 13,18" />
+    
+    <dots c="E" pts="21,9 20,10 19,11 18,12 17,13 16,14 15,15 14,16 13,17 12,18" />
+    
+    <dots c="E" pts="22,10 21,11 20,12 19,13 18,14 17,15 16,16 15,17 14,18 13,19" />
+
+    <dots c="G" pts="12,19 13,19" />
+    <dots c="G" pts="11,17 11,18 12,18" />
+    <dots c="G" pts="13,20 14,20 14,21" />
+
+    <dots c="H" pts="12,20 11,21" />
+
+    <dots c="G" pts="10,21 10,22 11,22" />
+  </layer>
+
+  <postprocess>
+    <outline sel-out="false" color="#000000FF" thickness="1" />
+  </postprocess>
+</pxvg>

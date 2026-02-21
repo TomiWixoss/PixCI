@@ -16,7 +16,8 @@ PixCI giải quyết vấn đề LLM gặp "ảo giác" khi xử lý không gian
 Yêu cầu: Python 3.9+
 
 ```bash
-pip install -e .
+uv venv
+uv pip install -e .
 ```
 
 ---
