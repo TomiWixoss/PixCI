@@ -26,11 +26,8 @@ pixci-web/
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-python run.py
+uv sync
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Backend runs at: `http://localhost:8000`
@@ -41,7 +38,6 @@ API Docs: `http://localhost:8000/api/docs`
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local
 npm run dev
 ```
 
@@ -122,19 +118,19 @@ Body:
 ### Backend Development
 ```bash
 cd backend
-python run.py  # Auto-reload enabled
+uv run uvicorn app.main:app --reload
 ```
 
 ### Frontend Development
 ```bash
 cd frontend
-npm run dev  # Hot reload enabled
+npm run dev
 ```
 
 ### Run Both Simultaneously
 ```bash
 # Terminal 1
-cd backend && python run.py
+cd backend && uv run uvicorn app.main:app --reload
 
 # Terminal 2
 cd frontend && npm run dev
