@@ -1,106 +1,108 @@
 import pixci
 
-# 1. Khởi tạo Animation (128x128, 6 Khung hình, Tốc độ 8 FPS cho đòn đánh nhanh)
-anim = pixci.Animation(128, 128, columns=6, fps=8)
+# 1. Khởi tạo Canvas (48x48 - Kích thước chuẩn cho icon HD Minecraft)
+canvas = pixci.Canvas(48, 48)
 
-# Palette
-dummy = pixci.Canvas(16, 16)
-bone = dummy.auto_shade("#D0D5E8", levels=3)
-void = dummy.auto_shade("#B000FF", levels=3)
-abyss = dummy.auto_shade("#0D0B1A", levels=2)
+# 2. Hệ thống Màu (Magma & Obsidian Theme)
+# Màu lưỡi kiếm: Hợp kim đen + Dung nham
+obsidian = canvas.auto_shade("#2A1C35", levels=2) 
+lava     = canvas.auto_shade("#FF4500", levels=3) # Cam đỏ rực
+gold     = canvas.auto_shade("#FFD700", levels=2) # Vàng lót tay
+wood     = canvas.auto_shade("#5D4037", levels=2) # Gỗ tay cầm
 
-bone_3d = [bone["dark3"], bone["base"], bone["light2"]]
-void_3d = [void["dark3"], void["base"], void["light2"]]
-
-cx, cy = 64, 64
-y_head, y_chest, y_pelvis, y_tail = 30, 60, 90, 115
-
-# ==========================================
-# 2. TẠO CÁC COMPONENT (Tái sử dụng)
-# ==========================================
-# --- COMPONENT A: Lõi & Hào quang ---
-cv_core = pixci.Canvas(128, 128)
-cv_core.fill_circle((cx, y_chest), 45, abyss["dark2"])
-cv_core.fill_circle((cx, y_chest), 35, void["dark2"])
-cv_core.draw_gem((cx, y_chest), 16, 24, void_3d)
-
-# --- COMPONENT B: Thân & Đầu ---
-cv_body = pixci.Canvas(128, 128)
-cv_body.draw_taper(cx, y_head, y_tail, 10, 0, bone["dark1"])
-for y in range(y_head + 15, y_pelvis, 10):
-    cv_body.fill_rect_centered((cx, y), 16, 4, bone["base"])
-cv_body.draw_taper(cx - 16, y_chest - 15, y_chest + 10, 8, 2, bone["base"])
-cv_body.draw_taper(cx + 16, y_chest - 15, y_chest + 10, 8, 2, bone["base"])
-cv_body.fill_rect_centered((cx, y_pelvis), 28, 8, bone["base"])
-# Đầu
-cv_body.draw_dome(cx, y_head, 28, 20, bone["base"])
-cv_body.fill_rect_centered((cx, y_head + 8), 20, 12, bone["base"])
-cv_body.fill_rect_centered((cx, y_head + 16), 14, 6, bone["dark1"])
-cv_body.fill_rect_centered((cx - 6, y_head + 4), 6, 6, abyss["dark2"])
-cv_body.fill_rect_centered((cx + 6, y_head + 4), 6, 6, abyss["dark2"])
-cv_body.fill_circle((cx - 6, y_head + 4), 1, void["light2"])
-cv_body.fill_circle((cx + 6, y_head + 4), 1, void["light2"])
-cv_body.draw_taper(cx - 16, y_head - 8, y_head + 2, 6, 10, bone["dark1"]) 
-cv_body.draw_taper(cx - 24, y_head - 22, y_head - 6, 0, 8, bone["base"])  
-cv_body.draw_taper(cx + 16, y_head - 8, y_head + 2, 6, 10, bone["dark1"]) 
-cv_body.draw_taper(cx + 24, y_head - 22, y_head - 6, 0, 8, bone["base"])  
-
-# --- COMPONENT C & D: Tay Trái (Nền) & Tay Phải (Vũ khí chính) ---
-cv_l_arm = pixci.Canvas(128, 128)
-cv_l_arm.draw_sphere((cx - 44, y_chest - 15), 14, bone_3d, light_dir="top_left")
-cv_l_arm.draw_taper(cx - 60, y_chest + 20, y_chest + 55, 6, 0, bone["base"])
-cv_l_arm.draw_taper(cx - 50, y_chest + 24, y_chest + 65, 6, 0, bone["light2"])
-cv_l_arm.draw_taper(cx - 40, y_chest + 20, y_chest + 45, 6, 0, bone["base"])
-
-cv_r_arm = pixci.Canvas(128, 128)
-cv_r_arm.draw_sphere((cx + 44, y_chest - 15), 14, bone_3d, light_dir="top_left")
-cv_r_arm.draw_taper(cx + 60, y_chest + 20, y_chest + 55, 6, 0, bone["base"])
-cv_r_arm.draw_taper(cx + 50, y_chest + 24, y_chest + 65, 6, 0, bone["light2"])
-cv_r_arm.draw_taper(cx + 40, y_chest + 20, y_chest + 45, 6, 0, bone["base"])
-
-# --- COMPONENT E: Hiệu ứng Sóng xung kích (Chỉ xuất hiện khi va chạm) ---
-cv_fx = pixci.Canvas(128, 128)
-# Vẽ vệt chém ngang dưới mặt đất tại vị trí tay phải giáng xuống (X = 114, Y = 125)
-cv_fx.fill_ellipse_anchored((110, 125), 24, 6, void["light2"], align="bottom")
-cv_fx.fill_ellipse_anchored((110, 125), 14, 8, void["base"], align="bottom")
-cv_fx.fill_circle((110, 115), 4, void["light2"]) # Tia lửa bắn lên
+# 3. Hàm hỗ trợ vẽ đường chéo "Bậc thang" (Pixel-Perfect Diagonal)
+def draw_diagonal_block(start_x, start_y, length, color, offset_x=0, offset_y=0):
+    """
+    Vẽ một dải pixel chéo từ trái-dưới lên phải-trên.
+    offset_x, offset_y: Dùng để làm dày thanh kiếm.
+    """
+    for i in range(length):
+        # Tọa độ chéo: x tăng, y giảm
+        px = start_x + i + offset_x
+        py = start_y - i + offset_y
+        canvas.set_pixel((px, py), color)
 
 # ==========================================
-# 3. KỊCH BẢN HÀNH ĐỘNG (ACTION MATRIX)
+# THIẾT KẾ KIẾM CHÉO (MC STYLE)
 # ==========================================
-# Cấu trúc: [Thân, Lõi, Tay Trái, Tay Phải, Hiệu ứng (True/False)]
-# Trục Y: Âm (-) là bay lên cao, Dương (+) là thụt xuống thấp
-attack_sequence = [
-    {"body": 0,  "core": 0,  "l_arm": 0,   "r_arm": 0,   "fx": False}, # F1: Đứng im chờ đợi
-    {"body": -4, "core": -2, "l_arm": +2,  "r_arm": -12, "fx": False}, # F2: LẤY ĐÀ - Nhô người lên, vung tay phải tít lên trời (-12)
-    {"body": -6, "core": -3, "l_arm": +4,  "r_arm": -18, "fx": False}, # F3: ĐỈNH ĐIỂM - Tay phải vung cao nhất chuẩn bị chém
-    {"body": +4, "core": +2, "l_arm": -4,  "r_arm": +15, "fx": True }, # F4: VA CHẠM - Đập mạnh xuống (+15), cơ thể nén xuống (+4) do phản lực, BẬT FX
-    {"body": +2, "core": +1, "l_arm": -2,  "r_arm": +15, "fx": False}, # F5: GIỮ ĐÒN - Tay vẫn ghim dưới đất, dư chấn tàn lụi
-    {"body": -2, "core": -1, "l_arm": +2,  "r_arm": +6,  "fx": False}, # F6: THU HỒI - Rút tay lên từ từ về dáng chuẩn
-]
 
-for frame_idx, state in enumerate(attack_sequence):
-    f = anim.add_frame()
-    
-    # Layering: Background (Hào quang) -> Thân -> Tay -> FX
-    f.paste(cv_core, (0, state["core"]))
-    f.paste(cv_body, (0, state["body"]))
-    f.paste(cv_l_arm, (0, state["l_arm"]))
-    f.paste(cv_r_arm, (0, state["r_arm"]))
-    
-    # Dán hiệu ứng vụn vỡ nếu là khung hình Va chạm (Frame 4)
-    if state["fx"]:
-        f.paste(cv_fx, (0, 0)) # FX đã căn chuẩn tọa độ tĩnh
-    
-    # Hậu kỳ siêu mượt cho từng frame
-    f.cleanup_jaggies()
-    f.add_highlight_edge(light_dir="top_left", intensity=0.35)
-    f.add_outline(thickness=1, sel_out=True)
-    
-    print(f"Đã render xong Frame Tấn công {frame_idx + 1}/6")
+# Điểm gốc bắt đầu vẽ (Góc dưới bên trái)
+base_x, base_y = 10, 38
+
+# --- BƯỚC 1: TAY CẦM (HANDLE) ---
+# Vẽ lõi tay cầm
+draw_diagonal_block(base_x, base_y, 9, wood["base"])
+# Vẽ bóng đổ phía dưới tay cầm (để tạo khối tròn)
+draw_diagonal_block(base_x + 1, base_y, 8, wood["dark1"], offset_x=0, offset_y=0)
+
+# Đốc kiếm (Pommel) - Khối tròn ở đuôi
+canvas.fill_rect((base_x - 2, base_y + 1), (base_x + 1, base_y + 4), gold["dark1"])
+canvas.set_pixel((base_x - 1, base_y + 2), gold["light1"]) # Điểm sáng
+
+# --- BƯỚC 2: KIẾM CÁCH (CROSSGUARD - CÁNH CHẮN) ---
+# Điểm giao nhau giữa tay cầm và lưỡi kiếm
+guard_x = base_x + 9
+guard_y = base_y - 9
+
+# Vẽ thanh chắn chéo ngược lại (Vuông góc với kiếm)
+# Cánh trên (hướng lên góc 10h)
+for i in range(1, 6):
+    canvas.set_pixel((guard_x - i, guard_y - i), gold["base"])
+    canvas.set_pixel((guard_x - i + 1, guard_y - i), gold["light1"]) # Viền sáng
+
+# Cánh dưới (hướng xuống góc 4h)
+for i in range(1, 6):
+    canvas.set_pixel((guard_x + i, guard_y + i), gold["base"])
+    canvas.set_pixel((guard_x + i, guard_y + i - 1), gold["dark1"]) # Viền tối
+
+# Ngọc tâm kiếm cách
+canvas.fill_rect((guard_x - 1, guard_y - 1), (guard_x + 2, guard_y + 2), lava["dark2"])
+canvas.set_pixel((guard_x, guard_y), lava["light2"])
+
+# --- BƯỚC 3: LƯỠI KIẾM (BLADE) ---
+# Điểm bắt đầu lưỡi kiếm
+blade_start_x = guard_x + 2
+blade_start_y = guard_y - 2
+blade_len = 16
+
+# Layer 1: Lưỡi sắc cạnh trên (Highlight - Màu sáng nhất)
+draw_diagonal_block(blade_start_x, blade_start_y, blade_len, obsidian["light2"], offset_y=-1)
+
+# Layer 2: Thân kiếm chính (Core - Màu nền)
+draw_diagonal_block(blade_start_x, blade_start_y, blade_len + 1, obsidian["base"])
+
+# Layer 3: Sống kiếm (Shadow - Màu tối nhất tạo độ dày)
+draw_diagonal_block(blade_start_x, blade_start_y, blade_len, obsidian["dark1"], offset_x=1)
+
+# --- BƯỚC 4: HIỆU ỨNG DUNG NHAM (LAVA RUNES) ---
+# Vẽ các đường nứt magma rực sáng trên thân kiếm
+# Cách vẽ: Chọn ngẫu nhiên hoặc cố định một số điểm trên thân kiếm để tô màu cam
+rune_positions = [2, 5, 6, 9, 10, 13] # Các đốt trên thân kiếm sẽ phát sáng
+for i in rune_positions:
+    rx = blade_start_x + i
+    ry = blade_start_y - i
+    # Vẽ đốm lửa vào chính giữa thân kiếm
+    canvas.set_pixel((rx, ry), lava["light1"])
+    # Hiệu ứng lan tỏa nhẹ ra xung quanh
+    if i % 2 == 0:
+        canvas.set_pixel((rx + 1, ry), lava["base"]) # Lan sang phải
+
+# --- BƯỚC 5: MŨI KIẾM (TIP) ---
+# Làm nhọn mũi kiếm kiểu pixel
+tip_x = blade_start_x + blade_len
+tip_y = blade_start_y - blade_len
+canvas.set_pixel((tip_x, tip_y - 1), obsidian["light2"]) # Đỉnh nhọn
+canvas.set_pixel((tip_x + 1, tip_y), obsidian["dark1"])  # Cạnh dưới
 
 # ==========================================
-# 4. XUẤT FILE ANIMATION
+# 4. HẬU KỲ (POST-PROCESSING)
 # ==========================================
-anim.save("void_boss_attack.png", scale=8)
-print("Hoàn tất! Hãy mở file void_boss_attack.gif để chiêm ngưỡng cú đập hủy diệt.")
+# Khử răng cưa (Quan trọng cho đường chéo pixel)
+canvas.cleanup_jaggies()
+
+# Thêm vầng sáng bao quanh kiếm (Enchanted effect)
+canvas.add_outline(thickness=1, sel_out=True) 
+
+# Lưu file (Scale 12 để nhìn rõ từng pixel khối vuông vức)
+canvas.save("mc_style_magma_blade.png", scale=12)
+print("Đã chế tác xong: mc_style_magma_blade.png")
