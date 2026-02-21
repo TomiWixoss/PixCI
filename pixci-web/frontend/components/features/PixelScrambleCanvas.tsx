@@ -10,7 +10,7 @@ interface PixelScrambleCanvasProps {
 export function PixelScrambleCanvas({ base64Image, isProcessing }: PixelScrambleCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number | undefined>(undefined)
   const [imageLoaded, setImageLoaded] = useState(false)
 
   useEffect(() => {

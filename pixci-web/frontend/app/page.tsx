@@ -13,7 +13,7 @@ import { useTheme } from 'next-themes'
 import { PixelStar } from '@/components/ui/svgs/PixelStar'
 import { PixelLogo } from '@/components/ui/svgs/PixelLogo'
 import { PixelPalette } from '@/components/ui/svgs/PixelPalette'
-import { Sun, Moon, Download, Trash2, PlusCircle, X } from 'lucide-react'
+import { Sun, Moon, Download, Trash2, PlusCircle, X, Github } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function Home() {
@@ -134,6 +134,15 @@ export default function Home() {
             >
               {mounted && theme === 'dark' ? <Sun className="w-5 h-5 text-[var(--text-color)]" /> : <Moon className="w-5 h-5 text-[var(--text-color)]" />}
             </button>
+            <a 
+              href="https://github.com/TomiWixoss/PixCI"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="GitHub"
+              className="art-canvas !p-3 !rounded-full bg-white dark:bg-transparent hover:bg-[var(--accent-pink)] dark:hover:bg-[var(--accent-pink)] hover:shadow-[4px_4px_0_var(--text-color)] transition-all"
+            >
+              <Github className="w-5 h-5 text-[var(--text-color)]" />
+            </a>
           </div>
         </div>
 
