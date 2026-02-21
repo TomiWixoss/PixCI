@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: pixci-backend
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: HOST
+        value: "0.0.0.0"
+      - key: PORT
+        value: "8000"
+      - key: DEBUG
+        value: "false"
+      - key: CORS_ORIGINS
+        value: "https://pixci-web.vercel.app,https://pixci.vercel.app"
+      - key: MAX_UPLOAD_SIZE
+        value: "10485760"
+      - key: MAX_IMAGE_DIMENSION
+        value: "512"
+    healthCheckPath: /api/v1/health

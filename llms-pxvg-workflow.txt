@@ -50,14 +50,6 @@
 
 ## Post-processing (cuối file)
 
-```xml
-<postprocess>
-  <outline sel-out="true" thickness="1" />
-  <shadow dir="top_left" intensity="0.3" />
-  <jaggies />
-</postprocess>
-```
-
 - `<outline>` - Viền tự động (sel-out="true" lấy màu vật thể)
 - `<shadow>` - Bóng đổ (dir: top_left, top_right, bottom_left, bottom_right)
 - `<jaggies>` - Khử răng cưa
