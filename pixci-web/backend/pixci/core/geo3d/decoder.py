@@ -66,22 +66,18 @@ def decode_pxvg_to_texture(
     metadata_path = pxvg_dir / f"{model_name}_metadata.txt"
     
     if full_png_path.exists() and metadata_path.exists():
-        # Use global bbox for 100% lossless reconstruction
+        # Load full PNG as base (100% lossless for unchanged pixels)
         with open(metadata_path) as f:
             metadata_line = f.read().strip()
             if metadata_line.startswith('global_bbox:'):
                 bbox_str = metadata_line.replace('global_bbox:', '')
                 bbox_x, bbox_y, bbox_w, bbox_h = map(int, bbox_str.split(','))
                 
-                # Load and paste global bbox
+                # Paste global bbox as base
                 global_bbox_img = Image.open(full_png_path).convert('RGBA')
                 atlas.paste(global_bbox_img, (bbox_x, bbox_y))
-                
-                # Save and return (100% lossless!)
-                atlas.save(output_texture_path)
-                return output_texture_path
     
-    # Fallback: process individual bones
+    # Now overlay PXVG edits on top of base
     # Process all PXVG files
     pxvg_files = list(pxvg_dir.glob('*.pxvg'))
     
@@ -92,45 +88,34 @@ def decode_pxvg_to_texture(
         if not metadata:
             continue
         
-        # Check if original PNG exists (for lossless reconstruction)
-        png_path = pxvg_path.with_suffix('.png')
+        # ALWAYS decode from PXVG (to apply user edits)
+        uv_keys = metadata.get('uv', '')
+        if not uv_keys:
+            continue
         
-        if png_path.exists() and 'bbox' in metadata:
-            # Use original bbox PNG (100% lossless)
-            bbox_img = Image.open(png_path).convert('RGBA')
-            bbox_x, bbox_y, bbox_w, bbox_h = map(int, metadata['bbox'].split(','))
+        with NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+            tmp_path = Path(tmp.name)
+        
+        try:
+            decode_pxvg(pxvg_path, tmp_path, scale=1)
+            combined_img = Image.open(tmp_path).convert('RGBA')
             
-            # Paste entire bbox back to atlas
-            atlas.paste(bbox_img, (bbox_x, bbox_y))
-        else:
-            # Fallback: decode PXVG and split
-            uv_keys = metadata.get('uv', '')
-            if not uv_keys:
-                continue
+            uv_list = uv_keys.split('|')
             
-            with NamedTemporaryFile(suffix='.png', delete=False) as tmp:
-                tmp_path = Path(tmp.name)
-            
-            try:
-                decode_pxvg(pxvg_path, tmp_path, scale=1)
-                combined_img = Image.open(tmp_path).convert('RGBA')
-                
-                uv_list = uv_keys.split('|')
-                
-                if len(uv_list) == 1:
-                    x, y, w, h = map(int, uv_list[0].split(','))
-                    atlas.paste(combined_img, (x, y))
-                else:
-                    x_offset = 0
-                    for uv_key in uv_list:
-                        x, y, w, h = map(int, uv_key.split(','))
-                        face_img = combined_img.crop((x_offset, 0, x_offset + w, combined_img.height))
-                        if face_img.height != h:
-                            face_img = face_img.crop((0, 0, w, h))
-                        atlas.paste(face_img, (x, y))
-                        x_offset += w
-            finally:
-                tmp_path.unlink(missing_ok=True)
+            if len(uv_list) == 1:
+                x, y, w, h = map(int, uv_list[0].split(','))
+                atlas.paste(combined_img, (x, y))
+            else:
+                x_offset = 0
+                for uv_key in uv_list:
+                    x, y, w, h = map(int, uv_key.split(','))
+                    face_img = combined_img.crop((x_offset, 0, x_offset + w, combined_img.height))
+                    if face_img.height != h:
+                        face_img = face_img.crop((0, 0, w, h))
+                    atlas.paste(face_img, (x, y))
+                    x_offset += w
+        finally:
+            tmp_path.unlink(missing_ok=True)
     
     # Save texture
     atlas.save(output_texture_path)
