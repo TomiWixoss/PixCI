@@ -48,6 +48,21 @@ pixci-cli.exe init --size 16x16 -o canvas.py -f code
 pixci-cli.exe run script.py --scale 10
 ```
 
+### 5. GEO_SPLIT - Tách texture 3D thành PXVG
+```bash
+# Tách texture theo bone (mặc định, ít file)
+pixci-cli.exe geo_split model.geo.json texture.png -o output_folder
+
+# Tách texture theo face (chi tiết hơn, nhiều file)
+pixci-cli.exe geo_split model.geo.json texture.png -o output_folder --by-face
+```
+
+### 6. GEO_MERGE - Gộp PXVG thành texture 3D
+```bash
+# Gộp các file PXVG đã chỉnh sửa thành texture PNG
+pixci-cli.exe geo_merge pxvg_folder/ model.geo.json -o output_texture.png
+```
+
 ## Workflow cho AI
 
 ### Khi user muốn chuyển ảnh sang text:
@@ -77,11 +92,25 @@ pixci-cli.exe init --size 32x32 -o new_canvas.txt
 2. Scale từ 1-20, thường dùng 10 cho preview
 3. Dùng `--auto` để tự động phát hiện block size
 4. Output file extension tự động detect format
+5. **geo_split**: Dùng `--by-face` nếu cần chi tiết từng face, mặc định tách theo bone (tối ưu)
+6. **geo_merge**: Cần file geo.json gốc để biết kích thước texture
 
 ## Ví dụ thực tế
 
+### Workflow 2D sprite
 ```bash
-# Workflow hoàn chỉnh
+# Chuyển sprite sang text và preview
 pixci-cli.exe encode sprite.png -o sprite.txt --auto
 pixci-cli.exe decode sprite.txt -o sprite_preview.png --scale 10
+```
+
+### Workflow 3D texture editing
+```bash
+# Bước 1: Tách texture 3D thành các file PXVG
+pixci-cli.exe geo_split bat.geo.json bat_texture.png -o bat_pxvg/
+
+# Bước 2: AI chỉnh sửa các file PXVG trong folder bat_pxvg/
+
+# Bước 3: Gộp lại thành texture PNG
+pixci-cli.exe geo_merge bat_pxvg/ bat.geo.json -o bat_texture_edited.png
 ```
