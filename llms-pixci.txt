@@ -1,0 +1,87 @@
+# PixCI CLI Tool - Hướng dẫn sử dụng cho AI
+
+## File executable: `pixci-cli.exe`
+
+Công cụ dòng lệnh để chuyển đổi giữa ảnh và text-based pixel art formats.
+
+## Các lệnh cơ bản
+
+### 1. ENCODE - Chuyển ảnh sang text
+```bash
+# Chuyển ảnh sang Grid format (text đơn giản)
+pixci-cli.exe encode input.png -o output.txt -f grid
+
+# Chuyển ảnh sang PXVG format (XML)
+pixci-cli.exe encode input.png -o output.pxvg.xml -f pxvg
+
+# Chuyển ảnh sang Code format (Python)
+pixci-cli.exe encode input.png -o output.py -f code
+
+# Tự động phát hiện kích thước block
+pixci-cli.exe encode input.png -o output.txt --auto
+```
+
+### 2. DECODE - Chuyển text sang ảnh
+```bash
+# Chuyển Grid/Text sang ảnh
+pixci-cli.exe decode input.txt -o output.png --scale 10
+
+# Chuyển PXVG sang ảnh
+pixci-cli.exe decode input.pxvg.xml -o output.png --scale 10
+
+# Scale nhỏ hơn (1-20)
+pixci-cli.exe decode input.txt -o output.png --scale 5
+```
+
+### 3. INIT - Tạo canvas rỗng
+```bash
+# Tạo canvas 32x32
+pixci-cli.exe init --size 32x32 -o canvas.txt
+
+# Tạo canvas 16x16 format code
+pixci-cli.exe init --size 16x16 -o canvas.py -f code
+```
+
+### 4. RUN - Chạy Python script
+```bash
+# Chạy script Python do AI tạo
+pixci-cli.exe run script.py --scale 10
+```
+
+## Workflow cho AI
+
+### Khi user muốn chuyển ảnh sang text:
+```bash
+pixci-cli.exe encode image.png -o output.txt -f grid --auto
+```
+
+### Khi user muốn xem kết quả từ text:
+```bash
+pixci-cli.exe decode output.txt -o result.png --scale 10
+```
+
+### Khi user muốn tạo canvas mới:
+```bash
+pixci-cli.exe init --size 32x32 -o new_canvas.txt
+```
+
+## Các format hỗ trợ
+
+- **grid** - Text format đơn giản (xem `llms-pxvg-workflow.txt`)
+- **code** - Python code (xem `llms-python.txt`)
+- **pxvg** - XML format (xem `llms.txt`)
+
+## Lưu ý quan trọng
+
+1. File .exe có thể chạy ở bất kỳ đâu, không cần cài Python
+2. Scale từ 1-20, thường dùng 10 cho preview
+3. Dùng `--auto` để tự động phát hiện block size
+4. Output file extension tự động detect format
+
+## Ví dụ thực tế
+
+```bash
+# Workflow hoàn chỉnh
+pixci-cli.exe encode sprite.png -o sprite.txt --auto
+pixci-cli.exe decode sprite.txt -o sprite_preview.png --scale 10
+```
