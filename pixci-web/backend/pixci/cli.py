@@ -122,10 +122,15 @@ def geo_encode(
     geo_path: Path = typer.Argument(..., help="Đường dẫn file geo.json"),
     texture_path: Path = typer.Argument(..., help="Đường dẫn file texture PNG"),
     output_dir: Path = typer.Option(..., "-o", "--output", help="Thư mục đầu ra cho các file PXVG"),
-    mode: str = typer.Option("by_face", "--mode", help="Chế độ: by_face, by_cube, by_bone, single")
+    by_face: bool = typer.Option(False, "--by-face", help="Tách từng face riêng (nhiều file hơn)")
 ):
-    """Chuyển đổi Minecraft 3D model (geo.json) sang PXVG để AI chỉnh sửa."""
+    """Chuyển đổi Minecraft 3D model (geo.json) sang PXVG để AI chỉnh sửa.
+    
+    Mặc định: 1 file PXVG per bone (tối ưu)
+    --by-face: 1 file PXVG per face (chi tiết hơn nhưng nhiều file)
+    """
     try:
+        mode = 'by_face' if by_face else 'by_bone'
         outputs = encode_geo_to_pxvg(geo_path, texture_path, output_dir, mode=mode)
         
         console.print(f"[green]✓ Đã encode thành công {len(outputs)} file(s) PXVG[/green]")
@@ -147,11 +152,14 @@ def geo_decode(
     pxvg_dir: Path = typer.Argument(..., help="Thư mục chứa các file PXVG đã chỉnh sửa"),
     original_geo: Path = typer.Argument(..., help="File geo.json gốc (để lấy cấu trúc)"),
     output_geo: Path = typer.Option(..., "-o", "--output-geo", help="Đường dẫn geo.json đầu ra"),
-    output_texture: Path = typer.Option(..., "-t", "--output-texture", help="Đường dẫn texture PNG đầu ra"),
-    mode: str = typer.Option("by_face", "--mode", help="Chế độ decode (phải khớp với encode)")
+    output_texture: Path = typer.Option(..., "-t", "--output-texture", help="Đường dẫn texture PNG đầu ra")
 ):
     """Rebuild Minecraft 3D model từ các file PXVG đã chỉnh sửa."""
     try:
+        # Auto-detect mode from file count
+        pxvg_files = list(Path(pxvg_dir).glob('*.pxvg'))
+        mode = 'by_face' if len(pxvg_files) > 15 else 'by_bone'
+        
         geo_path, texture_path = decode_pxvg_to_geo(
             pxvg_dir, original_geo, output_geo, output_texture, mode=mode
         )

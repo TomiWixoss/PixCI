@@ -29,21 +29,50 @@ class GeoModel:
         with open(self.geo_path, 'r', encoding='utf-8') as f:
             self.data = json.load(f)
             
-        # Extract geometry data
-        geometry = self.data.get('minecraft:geometry', [{}])[0]
-        desc = geometry.get('description', {})
+        # Detect format version
+        format_version = self.data.get('format_version', '1.8.0')
         
-        self.identifier = desc.get('identifier', 'unknown').replace('geometry.', '')
-        self.texture_width = desc.get('texture_width', 64)
-        self.texture_height = desc.get('texture_height', 64)
-        self.bones = geometry.get('bones', [])
-        
-        # Visible bounds (for rendering hints)
-        self.visible_bounds = {
-            'width': desc.get('visible_bounds_width', 2),
-            'height': desc.get('visible_bounds_height', 2),
-            'offset': desc.get('visible_bounds_offset', [0, 0, 0])
-        }
+        # Handle different formats
+        if 'minecraft:geometry' in self.data:
+            # New format (1.12.0+)
+            geometry = self.data['minecraft:geometry'][0]
+            desc = geometry.get('description', {})
+            
+            self.identifier = desc.get('identifier', 'unknown').replace('geometry.', '')
+            self.texture_width = desc.get('texture_width', 64)
+            self.texture_height = desc.get('texture_height', 64)
+            self.bones = geometry.get('bones', [])
+            
+            # Visible bounds
+            self.visible_bounds = {
+                'width': desc.get('visible_bounds_width', 2),
+                'height': desc.get('visible_bounds_height', 2),
+                'offset': desc.get('visible_bounds_offset', [0, 0, 0])
+            }
+        else:
+            # Old format (1.8.0)
+            # Find geometry key (e.g., "geometry.bat")
+            geometry_key = None
+            for key in self.data.keys():
+                if key.startswith('geometry.'):
+                    geometry_key = key
+                    break
+                    
+            if not geometry_key:
+                raise ValueError("No geometry found in file")
+                
+            geometry = self.data[geometry_key]
+            self.identifier = geometry_key.replace('geometry.', '')
+            self.texture_width = geometry.get('texturewidth', 64)
+            self.texture_height = geometry.get('textureheight', 64)
+            self.bones = geometry.get('bones', [])
+            
+            # Visible bounds
+            self.visible_bounds = {
+                'width': geometry.get('visible_bounds_width', 2),
+                'height': geometry.get('visible_bounds_height', 2),
+                'offset': geometry.get('visible_bounds_offset', [0, 0, 0])
+            }
         
         # Load texture if provided
         if self.texture_path and self.texture_path.exists():
@@ -107,8 +136,15 @@ class GeoModel:
         if not self.texture:
             return None
             
-        uv = uv_data.get('uv', [0, 0])
-        uv_size = uv_data.get('uv_size', [1, 1])
+        # Handle both new format (dict with uv/uv_size) and old format (list [x, y])
+        if isinstance(uv_data, dict):
+            uv = uv_data.get('uv', [0, 0])
+            uv_size = uv_data.get('uv_size', [1, 1])
+        elif isinstance(uv_data, list):
+            # Old format: just [x, y] - need to calculate size from cube dimensions
+            return None  # Will be handled by _generate_box_uv_old
+        else:
+            return None
         
         # Convert UV coordinates (0-texture_width/height range)
         x1 = float(uv[0])
@@ -137,6 +173,24 @@ class GeoModel:
         if x2 > x1 and y2 > y1:
             return self.texture.crop((x1, y1, x2, y2))
         return None
+        
+    def _generate_box_uv_old(self, uv_origin: list, cube_size: list) -> Dict:
+        """Generate box UV mapping from old format [x, y] origin.
+        
+        Old format uses standard box UV layout.
+        """
+        x, y = uv_origin
+        w, h, d = [int(s) for s in cube_size]
+        
+        # Standard Minecraft box UV layout
+        return {
+            'north': {'uv': [x + d, y + d], 'uv_size': [w, h]},
+            'south': {'uv': [x + d + w + d, y + d], 'uv_size': [w, h]},
+            'east': {'uv': [x + d + w, y + d], 'uv_size': [d, h]},
+            'west': {'uv': [x, y + d], 'uv_size': [d, h]},
+            'up': {'uv': [x + d, y], 'uv_size': [w, d]},
+            'down': {'uv': [x + d + w, y], 'uv_size': [w, d]}
+        }
         
     def get_cube_info(self, bone_name: str, cube_index: int) -> Optional[Dict]:
         """Get detailed info about a specific cube.
