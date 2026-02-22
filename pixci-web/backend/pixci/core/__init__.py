@@ -1,2 +1,4 @@
-from .canvas import Canvas
-from .grid_engine import encode_image, encode_code, decode_text, init_canvas, init_code_canvas
+# Export geo3d module
+from . import geo3d
+
+__all__ = ['geo3d']

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 from .core.grid_engine import encode_image, encode_code, decode_text, init_canvas, init_code_canvas
 from .core.pxvg_engine import encode_pxvg, decode_pxvg
+from .core.geo3d import encode_geo_to_pxvg, decode_pxvg_to_geo, Canvas3D
 
 app = typer.Typer(
     help="PixCI: Công cụ CLI chuyển đổi Ảnh Pixel sang Text cho LLMs.",
@@ -114,6 +115,53 @@ def run(
             console.print(result.stdout)
     except Exception as e:
         console.print(f"[red]Lỗi thực thi: {str(e)}[/red]")
+        raise typer.Exit(code=1)
+
+@app.command()
+def geo_encode(
+    geo_path: Path = typer.Argument(..., help="Đường dẫn file geo.json"),
+    texture_path: Path = typer.Argument(..., help="Đường dẫn file texture PNG"),
+    output_dir: Path = typer.Option(..., "-o", "--output", help="Thư mục đầu ra cho các file PXVG"),
+    mode: str = typer.Option("by_face", "--mode", help="Chế độ: by_face, by_cube, by_bone, single")
+):
+    """Chuyển đổi Minecraft 3D model (geo.json) sang PXVG để AI chỉnh sửa."""
+    try:
+        outputs = encode_geo_to_pxvg(geo_path, texture_path, output_dir, mode=mode)
+        
+        console.print(f"[green]✓ Đã encode thành công {len(outputs)} file(s) PXVG[/green]")
+        console.print(f"Chế độ: {mode}")
+        console.print(f"Thư mục đầu ra: {output_dir}")
+        
+        for key, path in list(outputs.items())[:5]:
+            console.print(f"  • {key} → {path.name}")
+        
+        if len(outputs) > 5:
+            console.print(f"  ... và {len(outputs) - 5} file khác")
+            
+    except Exception as e:
+        console.print(f"[red]Lỗi: {str(e)}[/red]")
+        raise typer.Exit(code=1)
+
+@app.command()
+def geo_decode(
+    pxvg_dir: Path = typer.Argument(..., help="Thư mục chứa các file PXVG đã chỉnh sửa"),
+    original_geo: Path = typer.Argument(..., help="File geo.json gốc (để lấy cấu trúc)"),
+    output_geo: Path = typer.Option(..., "-o", "--output-geo", help="Đường dẫn geo.json đầu ra"),
+    output_texture: Path = typer.Option(..., "-t", "--output-texture", help="Đường dẫn texture PNG đầu ra"),
+    mode: str = typer.Option("by_face", "--mode", help="Chế độ decode (phải khớp với encode)")
+):
+    """Rebuild Minecraft 3D model từ các file PXVG đã chỉnh sửa."""
+    try:
+        geo_path, texture_path = decode_pxvg_to_geo(
+            pxvg_dir, original_geo, output_geo, output_texture, mode=mode
+        )
+        
+        console.print(f"[green]✓ Đã rebuild thành công model 3D[/green]")
+        console.print(f"Geo.json: {geo_path}")
+        console.print(f"Texture: {texture_path}")
+        
+    except Exception as e:
+        console.print(f"[red]Lỗi: {str(e)}[/red]")
         raise typer.Exit(code=1)
 
 if __name__ == "__main__":
