@@ -1,178 +1,166 @@
 """
-decoder.py - Decode PXVG back to geo.json and texture atlas
-Allows AI to edit PXVG files, then rebuild the 3D model.
+decoder.py - Gộp các file PXVG đã chỉnh thành texture PNG gốc
+Chỉ xử lý texture, KHÔNG tạo hay chỉnh geo.json
 """
 import json
-from pathlib import Path
-from typing import Dict, List, Tuple
-from PIL import Image
 import re
+from pathlib import Path
+from typing import Dict
+from PIL import Image
 
 
-def decode_pxvg_to_geo(
+def decode_pxvg_to_texture(
     pxvg_dir: Path,
-    original_geo_path: Path,
-    output_geo_path: Path,
-    output_texture_path: Path,
-    mode: str = 'by_face'
-) -> Tuple[Path, Path]:
-    """Reconstruct geo.json and texture atlas from modified PXVG files.
+    geo_path: Path,
+    output_texture_path: Path
+) -> Path:
+    """Gộp các file PXVG đã chỉnh thành texture PNG gốc.
     
     Args:
-        pxvg_dir: Directory containing modified PXVG files
-        original_geo_path: Original geo.json (for structure reference)
-        output_geo_path: Where to save reconstructed geo.json
-        output_texture_path: Where to save reconstructed texture atlas
-        mode: Decoding mode (must match encoding mode)
-            - 'by_face': Reconstruct from individual face PXVGs
-            - 'by_cube': Reconstruct from cube PXVGs
-            - 'by_bone': Reconstruct from bone PXVGs
-            
+        pxvg_dir: Thư mục chứa các file PXVG đã chỉnh
+        geo_path: File geo.json gốc (để lấy texture size)
+        output_texture_path: Đường dẫn output cho texture PNG
+        
     Returns:
-        Tuple of (geo_path, texture_path)
+        Path của texture PNG đã tạo
     """
     from ..pxvg_engine import decode_pxvg
+    from tempfile import NamedTemporaryFile
     
     pxvg_dir = Path(pxvg_dir)
     
-    # Load original geo.json for structure
-    with open(original_geo_path, 'r', encoding='utf-8') as f:
+    # Load geo.json để lấy texture size
+    with open(geo_path, 'r', encoding='utf-8') as f:
         geo_data = json.load(f)
-        
-    geometry = geo_data['minecraft:geometry'][0]
-    desc = geometry['description']
-    texture_width = desc.get('texture_width', 64)
-    texture_height = desc.get('texture_height', 64)
+    
+    # Get texture dimensions
+    if 'minecraft:geometry' in geo_data:
+        # Format mới
+        desc = geo_data['minecraft:geometry'][0]['description']
+        texture_width = desc.get('texture_width', 64)
+        texture_height = desc.get('texture_height', 64)
+    else:
+        # Format cũ
+        geo_key = [k for k in geo_data.keys() if k.startswith('geometry.')][0]
+        geometry = geo_data[geo_key]
+        texture_width = geometry.get('texturewidth', 64)
+        texture_height = geometry.get('textureheight', 64)
     
     # Create blank texture atlas
     atlas = Image.new('RGBA', (texture_width, texture_height), (0, 0, 0, 0))
     
-    if mode == 'by_face':
-        # Reconstruct from individual face PXVGs
-        pxvg_files = list(pxvg_dir.glob('*.pxvg'))
-        
-        for pxvg_path in pxvg_files:
-            # Extract metadata from PXVG comments
-            metadata = _extract_pxvg_metadata(pxvg_path)
-            
-            if not metadata:
-                continue
+    # Check if global bbox PNG exists (for 100% lossless)
+    model_name = pxvg_dir.name.split('_')[0] if '_' in pxvg_dir.name else 'model'
+    
+    # Try to find model name from first PXVG file
+    pxvg_files = list(pxvg_dir.glob('*.pxvg'))
+    if pxvg_files:
+        first_file = pxvg_files[0].stem
+        model_name = first_file.rsplit('_', 1)[0] if '_' in first_file else first_file
+        # Remove bone name
+        parts = model_name.split('_')
+        if len(parts) > 1:
+            model_name = parts[0]
+    
+    full_png_path = pxvg_dir / f"{model_name}_full.png"
+    metadata_path = pxvg_dir / f"{model_name}_metadata.txt"
+    
+    if full_png_path.exists() and metadata_path.exists():
+        # Use global bbox for 100% lossless reconstruction
+        with open(metadata_path) as f:
+            metadata_line = f.read().strip()
+            if metadata_line.startswith('global_bbox:'):
+                bbox_str = metadata_line.replace('global_bbox:', '')
+                bbox_x, bbox_y, bbox_w, bbox_h = map(int, bbox_str.split(','))
                 
-            # Decode PXVG to PNG
+                # Load and paste global bbox
+                global_bbox_img = Image.open(full_png_path).convert('RGBA')
+                atlas.paste(global_bbox_img, (bbox_x, bbox_y))
+                
+                # Save and return (100% lossless!)
+                atlas.save(output_texture_path)
+                return output_texture_path
+    
+    # Fallback: process individual bones
+    # Process all PXVG files
+    pxvg_files = list(pxvg_dir.glob('*.pxvg'))
+    
+    for pxvg_path in pxvg_files:
+        # Extract metadata
+        metadata = _extract_metadata_from_pxvg(pxvg_path)
+        
+        if not metadata:
+            continue
+        
+        # Check if original PNG exists (for lossless reconstruction)
+        png_path = pxvg_path.with_suffix('.png')
+        
+        if png_path.exists() and 'bbox' in metadata:
+            # Use original bbox PNG (100% lossless)
+            bbox_img = Image.open(png_path).convert('RGBA')
+            bbox_x, bbox_y, bbox_w, bbox_h = map(int, metadata['bbox'].split(','))
+            
+            # Paste entire bbox back to atlas
+            atlas.paste(bbox_img, (bbox_x, bbox_y))
+        else:
+            # Fallback: decode PXVG and split
+            uv_keys = metadata.get('uv', '')
+            if not uv_keys:
+                continue
+            
             with NamedTemporaryFile(suffix='.png', delete=False) as tmp:
                 tmp_path = Path(tmp.name)
-                
+            
             try:
                 decode_pxvg(pxvg_path, tmp_path, scale=1)
-                face_img = Image.open(tmp_path).convert('RGBA')
+                combined_img = Image.open(tmp_path).convert('RGBA')
                 
-                # Get UV coordinates from metadata
-                uv_data = metadata.get('uv', {})
-                if 'uv' in uv_data:
-                    uv = uv_data['uv']
-                    uv_size = uv_data['uv_size']
-                    
-                    # Paste face image back into atlas
-                    x = int(uv[0])
-                    y = int(uv[1])
-                    
-                    # Handle negative UV sizes
-                    if uv_size[0] < 0:
-                        face_img = face_img.transpose(Image.FLIP_LEFT_RIGHT)
-                    if uv_size[1] < 0:
-                        face_img = face_img.transpose(Image.FLIP_TOP_BOTTOM)
-                        
-                    atlas.paste(face_img, (x, y), face_img)
-                    
+                uv_list = uv_keys.split('|')
+                
+                if len(uv_list) == 1:
+                    x, y, w, h = map(int, uv_list[0].split(','))
+                    atlas.paste(combined_img, (x, y))
+                else:
+                    x_offset = 0
+                    for uv_key in uv_list:
+                        x, y, w, h = map(int, uv_key.split(','))
+                        face_img = combined_img.crop((x_offset, 0, x_offset + w, combined_img.height))
+                        if face_img.height != h:
+                            face_img = face_img.crop((0, 0, w, h))
+                        atlas.paste(face_img, (x, y))
+                        x_offset += w
             finally:
                 tmp_path.unlink(missing_ok=True)
-                
-    # Save reconstructed texture atlas
+    
+    # Save texture
     atlas.save(output_texture_path)
     
-    # Save geo.json (unchanged structure, only texture modified)
-    with open(output_geo_path, 'w', encoding='utf-8') as f:
-        json.dump(geo_data, f, indent='\t')
-        
-    return (output_geo_path, output_texture_path)
+    return output_texture_path
 
 
-def rebuild_texture_atlas(
-    face_images: Dict[str, Image.Image],
-    uv_mappings: Dict[str, Dict],
-    texture_width: int = 64,
-    texture_height: int = 64
-) -> Image.Image:
-    """Rebuild texture atlas from individual face images.
-    
-    Args:
-        face_images: Dict mapping face IDs to PIL Images
-        uv_mappings: Dict mapping face IDs to UV data (uv, uv_size)
-        texture_width: Atlas width
-        texture_height: Atlas height
-        
-    Returns:
-        PIL Image of reconstructed atlas
-    """
-    atlas = Image.new('RGBA', (texture_width, texture_height), (0, 0, 0, 0))
-    
-    for face_id, face_img in face_images.items():
-        if face_id not in uv_mappings:
-            continue
-            
-        uv_data = uv_mappings[face_id]
-        uv = uv_data.get('uv', [0, 0])
-        uv_size = uv_data.get('uv_size', [1, 1])
-        
-        x = int(uv[0])
-        y = int(uv[1])
-        
-        # Handle flipped textures
-        img = face_img.copy()
-        if uv_size[0] < 0:
-            img = img.transpose(Image.FLIP_LEFT_RIGHT)
-        if uv_size[1] < 0:
-            img = img.transpose(Image.FLIP_TOP_BOTTOM)
-            
-        # Resize if needed
-        target_w = int(abs(uv_size[0]))
-        target_h = int(abs(uv_size[1]))
-        if img.size != (target_w, target_h):
-            img = img.resize((target_w, target_h), Image.NEAREST)
-            
-        atlas.paste(img, (x, y), img)
-        
-    return atlas
-
-
-def _extract_pxvg_metadata(pxvg_path: Path) -> Dict:
-    """Extract metadata from PXVG XML comments.
-    
-    Returns:
-        Dict with metadata fields (model, bone, cube_index, face, uv)
-    """
-    metadata = {}
-    
+def _extract_metadata_from_pxvg(pxvg_path: Path) -> dict:
+    """Trích xuất metadata từ PXVG."""
     with open(pxvg_path, 'r', encoding='utf-8') as f:
         content = f.read()
-        
-    # Extract metadata from comments
-    comment_pattern = r'<!-- (\w+): (.+?) -->'
-    matches = re.findall(comment_pattern, content)
     
-    for key, value in matches:
-        if key == 'uv':
-            # Parse UV data (stored as string representation of dict)
-            try:
-                metadata[key] = eval(value)
-            except:
-                pass
-        elif key in ['cube_index']:
-            metadata[key] = int(value)
+    metadata = {}
+    
+    # Find UV comment (format: bbox:x,y,w,h|uv:...)
+    match = re.search(r'<!-- UV: (.+?) -->', content)
+    
+    if match:
+        data = match.group(1)
+        
+        # Parse bbox and uv
+        if 'bbox:' in data:
+            parts = data.split('|uv:')
+            if len(parts) == 2:
+                bbox_part = parts[0].replace('bbox:', '')
+                uv_part = parts[1]
+                metadata['bbox'] = bbox_part
+                metadata['uv'] = uv_part
         else:
-            metadata[key] = value
-            
+            # Old format (just UV keys)
+            metadata['uv'] = data
+    
     return metadata
-
-
-from tempfile import NamedTemporaryFile

@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import Optional
 from .core.grid_engine import encode_image, encode_code, decode_text, init_canvas, init_code_canvas
 from .core.pxvg_engine import encode_pxvg, decode_pxvg
-from .core.geo3d import encode_geo_to_pxvg, decode_pxvg_to_geo, Canvas3D
+from .core.geo3d.encoder import encode_texture_to_pxvg
+from .core.geo3d.decoder import decode_pxvg_to_texture
 
 app = typer.Typer(
     help="PixCI: Công cụ CLI chuyển đổi Ảnh Pixel sang Text cho LLMs.",
@@ -118,27 +119,27 @@ def run(
         raise typer.Exit(code=1)
 
 @app.command()
-def geo_encode(
+def geo_split(
     geo_path: Path = typer.Argument(..., help="Đường dẫn file geo.json"),
     texture_path: Path = typer.Argument(..., help="Đường dẫn file texture PNG"),
     output_dir: Path = typer.Option(..., "-o", "--output", help="Thư mục đầu ra cho các file PXVG"),
     by_face: bool = typer.Option(False, "--by-face", help="Tách từng face riêng (nhiều file hơn)")
 ):
-    """Chuyển đổi Minecraft 3D model (geo.json) sang PXVG để AI chỉnh sửa.
+    """Tách texture PNG thành nhiều file PXVG dựa vào UV mapping trong geo.json.
     
-    Mặc định: 1 file PXVG per bone (tối ưu)
-    --by-face: 1 file PXVG per face (chi tiết hơn nhưng nhiều file)
+    Mặc định: 1 file PXVG per bone (tối ưu, ít file)
+    --by-face: 1 file PXVG per face (chi tiết hơn, nhiều file)
     """
     try:
-        mode = 'by_face' if by_face else 'by_bone'
-        outputs = encode_geo_to_pxvg(geo_path, texture_path, output_dir, mode=mode)
+        outputs = encode_texture_to_pxvg(geo_path, texture_path, output_dir, by_face=by_face)
         
-        console.print(f"[green]✓ Đã encode thành công {len(outputs)} file(s) PXVG[/green]")
-        console.print(f"Chế độ: {mode}")
-        console.print(f"Thư mục đầu ra: {output_dir}")
+        mode_name = "by_face" if by_face else "by_bone"
+        console.print(f"[green]✓ Đã tách thành công {len(outputs)} file(s) PXVG[/green]")
+        console.print(f"Chế độ: {mode_name}")
+        console.print(f"Thư mục: {output_dir}")
         
-        for key, path in list(outputs.items())[:5]:
-            console.print(f"  • {key} → {path.name}")
+        for path in outputs[:5]:
+            console.print(f"  • {path.name}")
         
         if len(outputs) > 5:
             console.print(f"  ... và {len(outputs) - 5} file khác")
@@ -148,25 +149,17 @@ def geo_encode(
         raise typer.Exit(code=1)
 
 @app.command()
-def geo_decode(
+def geo_merge(
     pxvg_dir: Path = typer.Argument(..., help="Thư mục chứa các file PXVG đã chỉnh sửa"),
-    original_geo: Path = typer.Argument(..., help="File geo.json gốc (để lấy cấu trúc)"),
-    output_geo: Path = typer.Option(..., "-o", "--output-geo", help="Đường dẫn geo.json đầu ra"),
-    output_texture: Path = typer.Option(..., "-t", "--output-texture", help="Đường dẫn texture PNG đầu ra")
+    geo_path: Path = typer.Argument(..., help="File geo.json gốc (để lấy texture size)"),
+    output_texture: Path = typer.Option(..., "-o", "--output", help="Đường dẫn texture PNG đầu ra")
 ):
-    """Rebuild Minecraft 3D model từ các file PXVG đã chỉnh sửa."""
+    """Gộp các file PXVG đã chỉnh sửa thành texture PNG gốc."""
     try:
-        # Auto-detect mode from file count
-        pxvg_files = list(Path(pxvg_dir).glob('*.pxvg'))
-        mode = 'by_face' if len(pxvg_files) > 15 else 'by_bone'
+        texture_path = decode_pxvg_to_texture(pxvg_dir, geo_path, output_texture)
         
-        geo_path, texture_path = decode_pxvg_to_geo(
-            pxvg_dir, original_geo, output_geo, output_texture, mode=mode
-        )
-        
-        console.print(f"[green]✓ Đã rebuild thành công model 3D[/green]")
-        console.print(f"Geo.json: {geo_path}")
-        console.print(f"Texture: {texture_path}")
+        console.print(f"[green]✓ Đã gộp thành công texture PNG[/green]")
+        console.print(f"Output: {texture_path}")
         
     except Exception as e:
         console.print(f"[red]Lỗi: {str(e)}[/red]")

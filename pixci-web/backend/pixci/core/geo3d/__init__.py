@@ -1,17 +1,12 @@
 """
-geo3d - Minecraft Geometry 3D Model Framework for AI
-Converts Blockbench/Minecraft models to AI-editable PXVG format.
+Geo3D Module - Tách/gộp texture PNG cho Minecraft 3D models
+
+Chỉ xử lý texture, KHÔNG tạo hay chỉnh geo.json
 """
-from .parser import GeoModel
-from .encoder import encode_geo_to_pxvg, encode_face_to_pxvg
-from .decoder import decode_pxvg_to_geo, rebuild_texture_atlas
-from .canvas3d import Canvas3D
+from .encoder import encode_texture_to_pxvg
+from .decoder import decode_pxvg_to_texture
 
 __all__ = [
-    'GeoModel',
-    'encode_geo_to_pxvg',
-    'encode_face_to_pxvg',
-    'decode_pxvg_to_geo',
-    'rebuild_texture_atlas',
-    'Canvas3D',
+    'encode_texture_to_pxvg',
+    'decode_pxvg_to_texture',
 ]
