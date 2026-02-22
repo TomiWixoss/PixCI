@@ -1,0 +1,204 @@
+//bridge-file-version: #78
+{
+	"resource_pack_name": "bridgeRP",
+	"texture_name": "atlas.terrain",
+	"padding": 8,
+	"num_mip_levels": 4,
+	"texture_data": {
+		"deco1": {
+			"textures": [
+				"textures/block/deco1"
+			]
+		},
+		"deco2": {
+			"textures": [
+				"textures/block/deco2"
+			]
+		},
+		"food1": {
+			"textures": [
+				"textures/block/food1"
+			]
+		},
+		"dining_light": {
+			"textures": [
+				"textures/block/dining_light"
+		    ]
+		},
+		"wooden_mug": {
+			"textures": [
+				"textures/block/wooden_mug"
+			]
+		},
+		"mossy_table": {
+			"textures": [
+				"textures/block/mossy_table"
+			]
+		},
+		"bowl": {
+			"textures": [
+				"textures/block/bowl"
+			]
+		},
+		"dining_table1": {
+			"textures": [
+				"textures/block/dining_table1"
+			]
+		},
+		"d_middle": {
+			"textures": [
+				"textures/block/d_middle"
+			]
+		},
+		"d_right": {
+			"textures": [
+				"textures/block/d_right"
+			]
+		},
+		"mossy01": {
+			"textures": [
+				"textures/block/mossy01"
+			]
+		},
+		"chair1": {
+			"textures": [
+				"textures/block/chair1"
+			]
+		},
+		"wood_spoons": {
+			"textures": [
+				"textures/block/wood_spoons"
+			]
+		},
+		"tissue_stand": {
+			"textures": [
+				"textures/block/tissue_stand"
+			]
+		},
+		"rolling_pin": {
+			"textures": [
+				"textures/block/rolling_pin"
+			]
+		},
+		"cloth_1": {
+			"textures": [
+				"textures/block/cloth_1"
+			]
+		},
+		"wood_board1": {
+			"textures": [
+				"textures/block/wood_board1"
+			]
+		},
+		"plates": {
+			"textures": [
+				"textures/block/plates"
+			]
+		},
+		"tray1": {
+			"textures": [
+				"textures/block/tray1"
+			]
+		},
+		"flower_a1": {
+			"textures": [
+				"textures/block/flower_a1"
+			]
+		},
+		"flower_a2": {
+			"textures": [
+				"textures/block/flower_a2"
+			]
+		},
+		"circular_window": {
+			"textures": [
+				"textures/block/circular_window"
+			]
+		},
+		"ladder_wood": {
+			"textures": [
+				"textures/block/ladder_wood"
+			]
+		},
+		"wood_sign": {
+			"textures": [
+				"textures/block/wood_sign"
+			]
+		},
+		"ladder_rope": {
+			"textures": [
+				"textures/block/ladder_rope"
+			]
+		},
+		"window_box": {
+			"textures": [
+				"textures/block/window_box"
+			]
+		},
+		"fairydoor_open": {
+			"textures": [
+				"textures/block/fairydoor_open"
+			]
+		},
+		"fairydoor_close": {
+			"textures": [
+				"textures/block/fairydoor_close"
+			]
+		},
+		"wooden_well": {
+			"textures": [
+				"textures/block/wooden_well"
+			]
+		},
+		"fairy_statue": {
+			"textures": [
+				"textures/block/fairy_statue"
+			]
+		},
+		"bridge_right": {
+			"textures": [
+				"textures/block/connectable/bridge_right"
+			]
+		},
+		"outdoor_lamp": {
+			"textures": [
+				"textures/block/outdoor_lamp"
+			]
+		},
+		"flower_box1": {
+			"textures": [
+				"textures/block/flower_box1"
+			]
+		},
+		"flower_fairylight": {
+			"textures": [
+				"textures/block/flower_fairylight"
+			]
+		},
+		"leaves_grass0": {
+			"textures": [
+				"textures/block/leaves_grass0"
+			]
+		},
+		"wooden_bucket": {
+			"textures": [
+				"textures/block/wooden_bucket"
+			]
+		},
+		"blue_flower": {
+			"textures": [
+				"textures/block/blue_flower"
+			]
+		},
+		"flower_flat": {
+			"textures": [
+				"textures/block/flower_flat"
+			]
+		},
+		"garland_right": {
+			"textures": [
+				"textures/block/garland_right"
+			]
+		}
+	}
+}

@@ -1,0 +1,113 @@
+//bridge-file-version: #91
+{
+	"format_version": [
+		1,
+		1,
+		0
+	],
+	"faye:deco1": {
+		"sound": "wood"
+	},
+	"faye:deco2": {
+		"sound": "wood"
+	},
+	"faye:food1": {
+		"sound": "wood"
+	},
+	"faye:dining_light": {
+		"sound": "anvil"
+	},
+	"faye:wooden_mug": {
+		"sound": "wood"
+	},
+	"faye:mossy_table": {
+		"sound": "wood"
+	},
+	"faye:bowl": {
+		"sound": "wood"
+	},
+	"faye:dining_table1": {
+		"sound": "wood"
+	},
+	"faye:mossy01": {
+		"sound": "wood"
+	},
+	"faye:chair1": {
+		"sound": "wood"
+	},
+	"faye:mugs1": {
+		"sound": "glass"
+	},
+	"faye:set1": {
+		"sound": "wood"
+	},
+	"faye:tray1": {
+		"sound": "wood"
+	},
+	"faye:wood_spoons": {
+		"sound": "wood"
+	},
+	"faye:tissue_stand": {
+		"sound": "wood"
+	},
+	"faye:rolling_pin": {
+		"sound": "wood"
+	},
+	"faye:cloth_1": {
+		"sound": "wool"
+	},
+	"faye:plates": {
+		"sound": "anvil"
+	},
+	"faye:wood_board1": {
+		"sound": "wood"
+	},
+	"faye:flower_a2": {
+		"sound": "grass"
+	},
+	"faye:circular_window": {
+		"sound": "wood"
+	},
+	"faye:ladder_wood": {
+		"sound": "wood"
+	},
+	"faye:wood_sign": {
+		"sound": "wood"
+	},
+	"faye:ladder_rope": {
+		"sound": "wood"
+	},
+	"faye:window_box": {
+		"sound": "wood"
+	},
+	"faye:fairy_door": {
+		"sound": "wood"
+	},
+	"faye:wooden_well": {
+		"sound": "wood"
+	},
+	"faye:fairy_statue": {
+		"sound": "stone"
+	},
+	"faye:outdoor_lamp": {
+		"sound": "lamp"
+	},
+	"faye:flower_box1": {
+		"sound": "block"
+	},
+	"faye:fairy_mailbox": {
+		"sound": "wood"
+	},
+	"faye:leaves_grass0": {
+		"sound": "grass"
+	},
+	"faye:blue_flower": {
+		"sound": "grass"
+	},
+	"faye:flower_fairylight": {
+		"sound": "glass"
+	},
+	"faye:mini_sign1": {
+		"sound": "planks"
+	}
+}

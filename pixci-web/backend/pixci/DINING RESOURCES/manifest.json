@@ -1,0 +1,24 @@
+{
+	"format_version": 2,
+	"header": {
+		"name": "Faye Fairy Dining Set",
+		"description": "Resource Pack",
+		"uuid": "f2c06d85-c515-eef6-a2a9-ad5f9b61c1ca",
+		"version": [1, 0, 0],
+		"min_engine_version": [1, 16, 0]
+	},
+	"metadata": {
+		"authors": ["Simplymiprii"],
+		"generated_with": {
+			"blockbench_entity_wizard": ["1.3.1"]
+		}
+	},
+	"modules": [
+		{
+			"description": "Resources",
+			"type": "resources",
+			"uuid": "41209223-ca06-6570-bc19-9c59424b5286",
+			"version": [1, 0, 0]
+		}
+	]
+}
